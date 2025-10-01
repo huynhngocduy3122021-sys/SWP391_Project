@@ -1,9 +1,6 @@
-package com.example.demo.enity;
+package com.ngocduy.fap.swp391.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Past;
@@ -34,19 +31,19 @@ public class Member{
     LocalDate yearOfBirth;
 
     @Pattern(regexp = "(03|05|07|08|09|012|016|018|019)[0-9]{8}$", message = "Phone invalid!")
+    @NotEmpty(message = "Phone cannot be empty!")
     String phone;
 
     @Email
+    @NotEmpty(message = "Email cannot be empty!")
     String email;
 
-    //admin, member?
     String status;
 
     String sex;
 
     @NotEmpty(message = "password can not empty!")
     String password;
-
 
 
 }
