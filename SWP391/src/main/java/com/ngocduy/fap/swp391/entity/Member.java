@@ -26,12 +26,12 @@ public class Member implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "memberID")
     long memberId;
-    @Column(name = "name")
-    @NotEmpty(message = "Name can not empty!")
 
+    @Column(name = "name" , columnDefinition = "NVARCHAR(255)")
+    @NotEmpty(message = "Name can not empty!")
     String name;
 
-    @Column(name = "address")
+    @Column(name = "address" , columnDefinition = "NVARCHAR(255)")
     @NotEmpty(message = "Address cannot be empty!")
     String address;
 
@@ -42,21 +42,21 @@ public class Member implements UserDetails {
 
     @Column(name = "phone")
     @Pattern(regexp = "(03|05|07|08|09|012|016|018|019)[0-9]{8}$", message = "Phone invalid!")
-    @NotEmpty(message = "Phone cannot be empty!")
+    @NotEmpty(message = "Phone cannot be empty!" )
     String phone;
 
-    @Column(name = "email")
+    @Column(name = "email" , columnDefinition = "NVARCHAR(255)" )
     @Email
     @NotEmpty(message = "Email cannot be empty!")
     String email;
 
-    @Column(name = "status")
+    @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
     String status;
 
-    @Column(name = "sex")
+    @Column(name = "sex" , columnDefinition = "NVARCHAR(255)")
     String sex;
 
-    @Column(name = "password")
+    @Column(name = "password" , columnDefinition = "NVARCHAR(255)")
     @NotEmpty(message = "password can not empty!")
     String password;
 
@@ -68,9 +68,6 @@ public class Member implements UserDetails {
     @Override
     public String getUsername() {
         return this.getEmail();
-    }
-    public String password() {
-        return this.password;
     }
 
 }
