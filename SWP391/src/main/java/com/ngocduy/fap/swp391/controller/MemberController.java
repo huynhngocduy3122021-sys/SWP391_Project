@@ -3,14 +3,12 @@ package com.ngocduy.fap.swp391.controller;
 
 import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
+import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.service.MemberService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,7 +21,7 @@ public class MemberController {
 
 
 
-    @PostMapping("/api/member")
+    @PostMapping("/api/register")
     public ResponseEntity register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
@@ -35,7 +33,7 @@ public class MemberController {
     @PostMapping("/api/login")
     public ResponseEntity login(@Valid @RequestBody LoginRequest login) {
         // đưa qua memberService xử lí
-        Member memberLogin = memberService.login(login);
+        MemberResponse memberLogin = memberService.login(login);
         return ResponseEntity.ok(memberLogin);
     }
 

@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
+import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.repository.MemberRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +33,12 @@ public class MemberService implements UserDetailsService {
      @Autowired
      AuthenticationManager authenticationManager;
 
+     @Autowired
+     ModelMapper modelMapper;
+
+     @Autowired
+     TokenService tokenService;
+
     public Member register(Member member) {
         // Xử lý logic cho register
         member.setPassword(passwordEncoder.encode(member.getPassword()));
@@ -41,7 +48,7 @@ public class MemberService implements UserDetailsService {
     }
 
     //login*
-    public Member login(LoginRequest login) {
+    public MemberResponse login(LoginRequest login) {
 
         // xử lí và xác thực tài khoản
         // b1 : lấy userName(Email) và password
@@ -50,7 +57,13 @@ public class MemberService implements UserDetailsService {
         try{
           Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login.getEmail(), login.getPassword()));
 
-          return (Member) authentication.getPrincipal();
+          Member member = (Member) authentication.getPrincipal();
+          //==> maping bằng ModelMapper
+        MemberResponse memberResponse = modelMapper.map(member, MemberResponse.class);
+        String token = tokenService.generateToken(member);
+        memberResponse.setToken(token);
+        return memberResponse ;
+
         }catch(Exception e){
             throw new BadCredentialsException("Invalid email or password");
         }
