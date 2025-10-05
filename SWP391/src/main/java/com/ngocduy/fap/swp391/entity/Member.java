@@ -26,9 +26,9 @@ public class Member implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "memberID")
     long memberId;
+
     @Column(name = "name" , columnDefinition = "NVARCHAR(255)")
     @NotEmpty(message = "Name can not empty!")
-
     String name;
 
     @Column(name = "address" , columnDefinition = "NVARCHAR(255)")
@@ -68,9 +68,6 @@ public class Member implements UserDetails {
     @Override
     public String getUsername() {
         return this.getEmail();
-    }
-    public String password() {
-        return this.password;
     }
 
 }

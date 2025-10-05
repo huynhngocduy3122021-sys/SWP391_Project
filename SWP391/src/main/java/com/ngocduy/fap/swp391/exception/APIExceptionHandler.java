@@ -1,8 +1,10 @@
 package com.ngocduy.fap.swp391.exception;
 
 
+import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -25,11 +27,18 @@ public class APIExceptionHandler {
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity handleBadCredentialsException(BadCredentialsException exception) {
 
-        return ResponseEntity.status(401).body(exception.getMessage());
+        return ResponseEntity.status(401).body("Invalid username or password");
     }
 
+    @ExceptionHandler(InternalAuthenticationServiceException.class)
+    public ResponseEntity handleInternalAuthenticationServiceException(InternalAuthenticationServiceException exception) {
+        return ResponseEntity.status(401).body("Invalid username or password");
+    }
 
-
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity handleAuthenticationException(AuthenticationException exception) {
+        return ResponseEntity.status(401).body(exception.getMessage());
+    }
 
 
 }

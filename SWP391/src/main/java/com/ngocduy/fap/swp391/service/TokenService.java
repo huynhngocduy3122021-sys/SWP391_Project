@@ -17,12 +17,12 @@ import java.util.function.Function;
 @Service
 public class TokenService {
 
-    private final String SECRET = "Y2JUQaJ6bScNaYzejPyyHRXYme4gTHKjY2JUQaJ6bScNaYzejPyyHRXYme4gTHKj";
+    private final String SECRET_KEY = "Y2JUQaJ6bScNaYzejPyyHRXYme4gTHKjY2JUQaJ6bScNaYzejPyyHRXYme4gTHKj";
 
     @Autowired
     MemberRepository memberRepository;
     public SecretKey getSecretKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET);
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         return Keys.hmacShaKeyFor(keyBytes);
     }
     //generate token
@@ -34,12 +34,15 @@ public class TokenService {
                 .signWith(getSecretKey())
                 .compact();
     }
+
+
     //verify token
-    public Member verifyToken(String token) {
+    public Member extractToken(String token) {
        String value = getClaimFromToken(token, Claims::getSubject);
-       Long id = Long.parseLong(value);
+       long id = Long.parseLong(value);
        return memberRepository.findMemberByMemberId(id);
     } // dùng bất cứ khi nào gọi api để xác thực token
+
 
     public Claims getClaimsFromToken(String token) {
         return Jwts.parser()
@@ -48,6 +51,7 @@ public class TokenService {
                 .parseSignedClaims(token)
                 .getPayload();
     } // lấy ra thông tin của token
+
     public <T> T getClaimFromToken(String token, Function<Claims, T> claimsResolver) {
         Claims claims = getClaimsFromToken(token);
         return claimsResolver.apply(claims);
