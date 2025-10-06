@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.exception;
 
 
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
+import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -38,6 +39,10 @@ public class APIExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity handleAuthenticationException(AuthenticationException exception) {
         return ResponseEntity.status(401).body(exception.getMessage());
+    }
+    @ExceptionHandler(NotFoundException.class)
+    public ResponseEntity handleNotFoundException(NotFoundException exception) {
+        return ResponseEntity.status(404).body(exception.getMessage());
     }
 
 

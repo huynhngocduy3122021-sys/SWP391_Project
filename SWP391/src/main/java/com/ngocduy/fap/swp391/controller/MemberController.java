@@ -5,6 +5,7 @@ import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.service.MemberService;
+import com.ngocduy.fap.swp391.model.request.MemberRequest;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,4 +55,33 @@ public class MemberController {
         return ResponseEntity.ok(memberService.getCurrentMember());
     }
 
+    //  UPDATE
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
+        Member updated = memberService.updateMember(id, request);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        }
+        MemberResponse response = new MemberResponse();
+        response.setMemberId(updated.getMemberId());
+        response.setName(updated.getName());
+        response.setEmail(updated.getEmail());
+        response.setPhone(updated.getPhone());
+        response.setAddress(updated.getAddress());
+        response.setStatus(updated.getStatus());
+        response.setYearOfBirth(updated.getYearOfBirth());
+        response.setSex(updated.getSex());
+        return ResponseEntity.ok(response);
+    }
+
+    //  DELETE
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteMember(@PathVariable Long id) {
+        boolean deleted = memberService.deleteMember(id);
+        if (!deleted) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok("Member deleted successfully");
+    }
 }
+

@@ -60,6 +60,11 @@ public class Member implements UserDetails {
     @NotEmpty(message = "password can not empty!")
     String password;
 
+    // Soft_Deleted
+    @Column(name = "is_deleted")
+    private boolean deleted = false;
+
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of();
