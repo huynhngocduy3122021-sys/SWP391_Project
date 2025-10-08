@@ -41,12 +41,12 @@ public class Member implements UserDetails {
     @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate yearOfBirth;
 
-    @Column(name = "phone")
+    @Column(name = "phone", unique = true)
     @Pattern(regexp = "(03|05|07|08|09|012|016|018|019)[0-9]{8}$", message = "Phone invalid!")
     @NotEmpty(message = "Phone cannot be empty!" )
     private String phone;
 
-    @Column(name = "email" , columnDefinition = "NVARCHAR(255)")
+    @Column(name = "email" , columnDefinition = "NVARCHAR(255)", unique = true)
     @Email
     @NotEmpty(message = "Email cannot be empty!")
     private String email;
@@ -54,10 +54,10 @@ public class Member implements UserDetails {
     @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
     private String status;
 
-    @Column(name = "sex" , columnDefinition = "NVARCHAR(255)")
+    @Column(name = "sex")
     private String sex;
 
-    @Column(name = "password" , columnDefinition = "NVARCHAR(255)")
+    @Column(name = "password")
     @NotEmpty(message = "password can not empty!")
     private String password;
 
@@ -81,4 +81,7 @@ public class Member implements UserDetails {
     List<Article> articles;
 
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "admin_id")
+    private Admin adminId;
 }
