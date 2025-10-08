@@ -2,18 +2,18 @@ package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
+import com.ngocduy.fap.swp391.model.request.MemberRequest;
+import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.repository.MemberRepository;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,10 +27,16 @@ public class MemberService implements UserDetailsService {
     MemberRepository memberRepository;
 
      @Autowired
-    PasswordEncoder passwordEncoder ;
+    PasswordEncoder passwordEncoder;
 
      @Autowired
      AuthenticationManager authenticationManager;
+
+     @Autowired
+     ModelMapper modelMapper;
+
+     @Autowired
+     TokenService tokenService;
 
     public Member register(Member member) {
         // Xử lý logic cho register
@@ -41,24 +47,34 @@ public class MemberService implements UserDetailsService {
     }
 
     //login*
-    public Member login(LoginRequest login) {
+    public MemberResponse login(LoginRequest login) {
 
         // xử lí và xác thực tài khoản
         // b1 : lấy userName(Email) và password
         // b2 : tìm trong DB có account nào giống với UserName không(loadUserByUsername)
         // b3 : AuthenticationManager => so sanh tài khoảng và password dưới db <==> với password người dunùng nhập(authenticationManager)
-        try{
-          Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(login.getEmail(), login.getPassword()));
+          Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
+                  login.getEmail(),
+                  login.getPassword()
+          ));
 
-          return (Member) authentication.getPrincipal();
-        }catch(Exception e){
-            throw new BadCredentialsException("Invalid email or password");
+          Member member = (Member) authentication.getPrincipal();
+          /*
+          // Nếu user đã bị xóa mềm thì không cho login
+        if (member.isDeleted()) {
+            throw new AuthenticationException("Account has been deleted or disabled");
         }
+           */
+
+          //member => memberResponse
+          //==> maping bằng ModelMapper
+          MemberResponse memberResponse = modelMapper.map(member, MemberResponse.class);
+          String token = tokenService.generateToken(member);
+          memberResponse.setToken(token);
+          return memberResponse;
+
 
     }
-
-
-
 
 
     public List<Member> getAllMembers() {
@@ -66,10 +82,45 @@ public class MemberService implements UserDetailsService {
         return members;
     }
 
+    /*
+    // Get all active members
+    public List<Member> getAllMembers() {
+        return memberRepository.findAllByDeletedFalse();
+    }
+     */
+
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
         return memberRepository.findMemberByEmail(email);
+    }
+
+    public Member getCurrentMember() {
+        return (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    }
+    //update
+    public Member updateMember(Long id, MemberRequest request) {
+        return memberRepository.findById(id).map(existing -> {
+            existing.setName(request.getName());
+            existing.setEmail(request.getEmail());
+            existing.setPhone(request.getPhone());
+            existing.setAddress(request.getAddress());
+            existing.setYearOfBirth(request.getYearOfBirth());
+            existing.setSex(request.getSex());
+            existing.setStatus(request.getStatus());
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                existing.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+            return memberRepository.save(existing);
+        }).orElse(null);
+    }
+    //delete
+    public boolean deleteMember(Long id) {
+        return memberRepository.findById(id).map(member -> {
+            member.setDeleted(true);
+            memberRepository.save(member);
+            return true;
+        }).orElse(false);
     }
 
 }
