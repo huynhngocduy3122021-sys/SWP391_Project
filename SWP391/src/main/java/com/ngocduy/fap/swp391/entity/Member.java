@@ -76,6 +76,8 @@ public class Member implements UserDetails {
         return this.getEmail();
     }
 
+
+
     @OneToMany(mappedBy = "memberId")
     @JsonIgnore
     List<Article> articles;

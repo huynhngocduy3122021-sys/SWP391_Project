@@ -16,6 +16,7 @@ import java.util.List;
 
 @RestController
 @SecurityRequirement(name = "api")
+@RequestMapping("/api/members")
 public class MemberController {
 
     // điều hướng (controller) => xử lý logic (service) => lưu DB (repository) (JPA)
@@ -24,7 +25,7 @@ public class MemberController {
 
 
 
-    @PostMapping("/api/member")
+    @PostMapping()
     public ResponseEntity register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
@@ -33,7 +34,7 @@ public class MemberController {
     }
 
     //login*
-    @PostMapping("/api/login")
+    @PostMapping("/login")
     public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
         // đưa qua memberService xử lí
         MemberResponse member = memberService.login(loginRequest);
@@ -43,14 +44,14 @@ public class MemberController {
 
 
     //test get all member
-    @GetMapping("api/member")
+    @GetMapping()
     public ResponseEntity getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
 
     //test member hien dang login
-    @GetMapping("api/member/current")
+    @GetMapping("/current")
     public ResponseEntity getCurrentMember() {
         return ResponseEntity.ok(memberService.getCurrentMember());
     }
