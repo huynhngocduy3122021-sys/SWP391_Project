@@ -10,7 +10,7 @@
         <processorPath useClasspath="false">
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok/1.18.40/lombok-1.18.40.jar" />
         </processorPath>
-        <module name="SWP391" />
+        <module name="BE" />
       </profile>
       <profile name="Annotation profile for BE" enabled="true">
         <sourceOutputDir name="../SWP391/target/generated-sources/annotations" />
