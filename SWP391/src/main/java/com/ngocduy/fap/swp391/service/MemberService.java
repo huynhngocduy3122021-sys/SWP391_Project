@@ -82,12 +82,12 @@ public class MemberService implements UserDetailsService {
         return members;
     }
 
-    /*
-    // Get all active members
-    public List<Member> getAllMembers() {
+
+    // Lấy user chưa bị xóa mềm
+    public List<Member> getActiveMembers() {
         return memberRepository.findAllByDeletedFalse();
     }
-     */
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
