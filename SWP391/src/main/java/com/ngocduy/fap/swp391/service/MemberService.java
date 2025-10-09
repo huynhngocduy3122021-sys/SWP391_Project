@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
@@ -59,12 +60,12 @@ public class MemberService implements UserDetailsService {
           ));
 
           Member member = (Member) authentication.getPrincipal();
-          /*
+
           // Nếu user đã bị xóa mềm thì không cho login
         if (member.isDeleted()) {
             throw new AuthenticationException("Account has been deleted or disabled");
         }
-           */
+
 
           //member => memberResponse
           //==> maping bằng ModelMapper
@@ -76,18 +77,18 @@ public class MemberService implements UserDetailsService {
 
     }
 
-
+    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
-    }
+    } */
 
-    /*
+
     // Get all active members
     public List<Member> getAllMembers() {
         return memberRepository.findAllByDeletedFalse();
     }
-     */
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

@@ -56,7 +56,7 @@ public class MemberController {
     }
 
     //  UPDATE
-    @PutMapping("/{id}")
+    @PutMapping("api/member/update")
     public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
         Member updated = memberService.updateMember(id, request);
         if (updated == null) {
@@ -75,7 +75,7 @@ public class MemberController {
     }
 
     //  DELETE
-    @DeleteMapping("/{id}")
+    @DeleteMapping("api/member/delete")
     public ResponseEntity<?> deleteMember(@PathVariable Long id) {
         boolean deleted = memberService.deleteMember(id);
         if (!deleted) {
