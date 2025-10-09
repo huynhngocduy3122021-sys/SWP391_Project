@@ -25,7 +25,7 @@ public class MemberController {
 
 
 
-    @PostMapping()
+    @PostMapping("/register")
     public ResponseEntity register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
@@ -44,7 +44,7 @@ public class MemberController {
 
 
     //test get all member
-    @GetMapping()
+    @GetMapping("/allmember")
     public ResponseEntity getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
@@ -57,7 +57,7 @@ public class MemberController {
     }
 
     //  UPDATE
-    @PutMapping("/{id}")
+    @PutMapping("/update")
     public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
         Member updated = memberService.updateMember(id, request);
         if (updated == null) {
@@ -76,7 +76,7 @@ public class MemberController {
     }
 
     //  DELETE
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete")
     public ResponseEntity<?> deleteMember(@PathVariable Long id) {
         boolean deleted = memberService.deleteMember(id);
         if (!deleted) {
