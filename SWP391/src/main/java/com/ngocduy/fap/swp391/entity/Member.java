@@ -86,4 +86,8 @@ public class Member implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
     private Admin adminId;
+
+    @OneToMany(mappedBy = "memberId")
+    @JsonIgnore
+    private List<Auction> auctions;
 }

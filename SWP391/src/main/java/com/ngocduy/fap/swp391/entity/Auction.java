@@ -1,5 +1,7 @@
 package com.ngocduy.fap.swp391.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -30,10 +32,11 @@ public class Auction {
     private String description;
    @NotNull(message = "start time cannot be empty!")
     @Column(name = "startTime" , nullable = false)
-
+   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime startTime;
    @NotNull(message = "end time cannot be empty!")
     @Column(name = "endTime" , nullable = false)
+   @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
     private LocalDateTime endTime;
     @NotBlank(message = "status cannot be empty!")
     @Column(name = "status" , nullable = false , columnDefinition = "NVARCHAR(255)")
@@ -51,6 +54,8 @@ public class Auction {
 
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    @JsonIgnore
     private Member memberId;
 
 }

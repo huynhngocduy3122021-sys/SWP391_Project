@@ -22,8 +22,8 @@ public class AuctionController {
     AuctionService auctionService;
 
     @GetMapping()
-    public ResponseEntity getAuction(Auction auction ){
-       List<Auction> auctions = auctionService.getAllAuction(auction);
+    public ResponseEntity getAuction(){
+       List<Auction> auctions = auctionService.getAllAuction();
        return ResponseEntity.ok(auctions);
     }
 
