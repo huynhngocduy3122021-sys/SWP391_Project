@@ -1,4 +1,4 @@
-package com.ngocduy.fap.swp391.controller;
+ package com.ngocduy.fap.swp391.controller;
 
 
 import com.ngocduy.fap.swp391.entity.Member;
@@ -25,8 +25,8 @@ public class MemberController {
 
 
 
-    @PostMapping()
-    public ResponseEntity register(@Valid @RequestBody Member member) {
+    @PostMapping("/register")
+    public ResponseEntity<Member> register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
         Member newMember = memberService.register(member);
@@ -35,30 +35,38 @@ public class MemberController {
 
     //login*
     @PostMapping("/login")
-    public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<MemberResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         // đưa qua memberService xử lí
         MemberResponse member = memberService.login(loginRequest);
         return ResponseEntity.ok(member);
     }
 
 
-
+    /*
     //test get all member
-    @GetMapping()
-    public ResponseEntity getAllMember() {
+    @GetMapping("/allmember")
+    public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
+     */
 
     //test member hien dang login
     @GetMapping("/current")
-    public ResponseEntity getCurrentMember() {
+    public ResponseEntity<Member> getCurrentMember() {
         return ResponseEntity.ok(memberService.getCurrentMember());
     }
 
+    // GET member by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
+        Member member = memberService.getMemberById(id);
+        return ResponseEntity.ok(member);
+    }
+
     //  UPDATE
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
         Member updated = memberService.updateMember(id, request);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -76,8 +84,8 @@ public class MemberController {
     }
 
     //  DELETE
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMember(@PathVariable Long id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteMember(@PathVariable Long id) {
         boolean deleted = memberService.deleteMember(id);
         if (!deleted) {
             return ResponseEntity.notFound().build();

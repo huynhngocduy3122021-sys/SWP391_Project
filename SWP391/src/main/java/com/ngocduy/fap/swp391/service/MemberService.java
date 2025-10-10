@@ -76,18 +76,18 @@ public class MemberService implements UserDetailsService {
 
     }
 
-
+    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
     }
+    */
 
-    /*
-    // Get all active members
-    public List<Member> getAllMembers() {
+    // Lấy user chưa bị xóa mềm
+    public List<Member> getActiveMembers() {
         return memberRepository.findAllByDeletedFalse();
     }
-     */
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -98,6 +98,13 @@ public class MemberService implements UserDetailsService {
     public Member getCurrentMember() {
         return (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
+
+    // Get member by ID
+    public Member getMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+    }
+
     //update
     public Member updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {
