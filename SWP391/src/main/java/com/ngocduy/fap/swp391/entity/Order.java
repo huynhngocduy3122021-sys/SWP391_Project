@@ -31,6 +31,9 @@ public class Order implements Serializable {
     @Column(name = "PaymentStatus")
     private String paymentStatus;
 
+    @Column(name = "IsDeleted")
+    private boolean isDeleted = false;
+
     // Relationships
     @ManyToOne
     @JoinColumn(name = "MemberID", nullable = false)
@@ -38,7 +41,7 @@ public class Order implements Serializable {
 
     @ManyToOne
     @JoinColumn(name = "PackageID", nullable = false)
-    private Package pkg;
+    private Packages pkg;
 
     @ManyToOne
     @JoinColumn(name = "PayID", nullable = false)

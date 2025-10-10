@@ -32,6 +32,9 @@ public class Payment {
     @Column(name = "Status")
     private String status;
 
+    @Column(name = "IsDeleted")
+    private boolean isDeleted = false;
+
     // Relationship
     @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
     private List<Order> orders;

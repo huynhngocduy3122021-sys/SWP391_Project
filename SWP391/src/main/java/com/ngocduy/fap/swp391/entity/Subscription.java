@@ -22,6 +22,9 @@ public class Subscription {
     @Column(name = "Status")
     private String status;
 
+    @Column(name = "IsDeleted")
+    private boolean isDeleted = false;
+
     // Relationships
     @ManyToOne
     @MapsId("memberId")
@@ -31,5 +34,5 @@ public class Subscription {
     @ManyToOne
     @MapsId("packageId")
     @JoinColumn(name = "PackageID")
-    private Package pkg;
+    private Packages pkg;
 }
