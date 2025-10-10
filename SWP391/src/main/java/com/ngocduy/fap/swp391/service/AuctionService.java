@@ -5,6 +5,7 @@ import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.model.request.AuctionRequest;
 import com.ngocduy.fap.swp391.model.response.AuctionResponse;
 import com.ngocduy.fap.swp391.repository.AuctionRepository;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @Data
@@ -27,9 +29,22 @@ public class AuctionService {
     @Autowired
     AuctionRepository auctionRepository;
 
-    public List<Auction> getAllAuction(){
+    public List<AuctionResponse> getAllAuction(){
         List<Auction> auctions = auctionRepository.findAll();
-        return auctions;
+
+        return auctions.stream()
+                .map(auction -> AuctionResponse.builder()
+                        .auctionId(auction.getAucID())
+                        .title(auction.getTitle())
+                        .description(auction.getDescription())
+                        .startTime(auction.getStartTime())
+                        .endTime(auction.getEndTime())
+                        .price(auction.getPrice())
+                        .status(auction.getStatus())
+                        .memberName(auction.getMemberId().getName())
+                        .build())
+                .collect(Collectors.toList());
+
     }
 
     //tạo đấu giá
@@ -82,6 +97,23 @@ public class AuctionService {
               return true;
           }).orElse(false);
       }
+
+      // update
+    public Auction updateAuction(Long id, AuctionRequest auctionRequest) {
+        Auction existingAuction = auctionRepository.findAuctionByAucID(id);
+        if(existingAuction == null) {
+            throw new EntityNotFoundException("Auction not found with id: " + id);
+        } else {
+            existingAuction.setTitle(auctionRequest.getTitle());
+            existingAuction.setDescription(auctionRequest.getDescription());
+            existingAuction.setStartTime(auctionRequest.getStartTime());
+            existingAuction.setEndTime(auctionRequest.getEndTime());
+            existingAuction.setPrice(auctionRequest.getPrice());
+            existingAuction.setIncrement(auctionRequest.getIncrement());
+            existingAuction.setStatus(getAuctionStatus(auctionRequest.getStartTime() , auctionRequest.getEndTime()));
+            return auctionRepository.save(existingAuction);
+        }
+    }
 
 
 

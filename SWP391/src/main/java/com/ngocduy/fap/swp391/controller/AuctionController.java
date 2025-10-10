@@ -23,7 +23,7 @@ public class AuctionController {
 
     @GetMapping()
     public ResponseEntity getAuction(){
-       List<Auction> auctions = auctionService.getAllAuction();
+       List<AuctionResponse> auctions = auctionService.getAllAuction();
        return ResponseEntity.ok(auctions);
     }
 
@@ -32,12 +32,12 @@ public class AuctionController {
             @RequestBody AuctionRequest auctionRequest,
             @RequestHeader("Authorization") String authHeader) {
 
-        // ✅ Kiểm tra header có giá trị không
+        // Kiểm tra header có giá trị không
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
         }
 
-        // ✅ Cắt bỏ prefix "Bearer "
+        // Cắt bỏ prefix "Bearer "
         String token = authHeader.substring(7); // bỏ 7 ký tự đầu "Bearer "
 
         AuctionResponse response = auctionService.createAuction(auctionRequest, token);
@@ -52,6 +52,17 @@ public class AuctionController {
             return ResponseEntity.notFound().build();
         }
         return ResponseEntity.ok("Auction deleted successfully");
+    }
+
+    @PutMapping("{id}")
+    public ResponseEntity updateAuction(@PathVariable Long id, @Valid @RequestBody AuctionRequest request){
+        Auction updated = auctionService.updateAuction(id, request);
+        if (updated == null) {
+            return ResponseEntity.notFound().build();
+        } else {
+            return ResponseEntity.ok(updated);
+        }
+
     }
 
 

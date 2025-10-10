@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -12,6 +13,8 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -43,10 +46,10 @@ public class Auction {
     private String status;
     @NotNull(message = "price cannot be empty!")
     @Column(name = "price" , nullable = false)
-    private Double price;
+    private double price;
     @NotNull(message = "increment cannot be empty!")
     @Column(name = "increment" , nullable = false)
-    private Double increment;
+    private double increment;
 
     //soft delete
     @Column(name = "is_deleted")
@@ -57,5 +60,10 @@ public class Auction {
     @JoinColumn(name = "member_id", nullable = false)
     @JsonIgnore
     private Member memberId;
+
+    @OneToMany(mappedBy = "auction" , cascade = CascadeType.ALL , orphanRemoval = true)
+    @JsonManagedReference
+
+    private List<BID> Bid = new ArrayList<>();
 
 }

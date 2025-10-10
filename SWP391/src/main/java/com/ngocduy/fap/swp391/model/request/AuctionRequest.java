@@ -21,7 +21,7 @@ public class AuctionRequest {
     @NotNull
     private LocalDateTime endTime;
     @NotNull
-    private Double price;
+    private double price;
     @NotNull
-    private Double increment;
+    private double increment;
 }

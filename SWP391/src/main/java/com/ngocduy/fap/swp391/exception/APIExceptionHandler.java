@@ -2,13 +2,17 @@ package com.ngocduy.fap.swp391.exception;
 
 
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
+import com.ngocduy.fap.swp391.exception.exceptions.BIDException;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
@@ -44,6 +48,19 @@ public class APIExceptionHandler {
     public ResponseEntity handleNotFoundException(NotFoundException exception) {
         return ResponseEntity.status(404).body(exception.getMessage());
     }
+
+    @ExceptionHandler(EntityNotFoundException.class)
+    public ResponseEntity handleEntityNotFoundException(EntityNotFoundException exception) {
+        return ResponseEntity.status(404).body(exception.getMessage());
+    }
+
+
+    @ExceptionHandler(BIDException.class)
+    public ResponseEntity handleBidException(BIDException exception) {
+        return ResponseEntity.status(401).body(exception.getMessage());
+    }
+
+
 
 
 }
