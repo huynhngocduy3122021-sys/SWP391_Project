@@ -56,4 +56,9 @@ public class Admin {
     @OneToMany(mappedBy = "adminId")
     @JsonIgnore
     List<Member> members;
+
+
+    @OneToMany(mappedBy = "approvedAdmin", cascade = CascadeType.ALL)
+    @JsonIgnore
+    List<Article> approcedArticles;
 }

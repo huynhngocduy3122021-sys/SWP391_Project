@@ -1,7 +1,7 @@
 package com.ngocduy.fap.swp391.controller;
 
 
-import com.ngocduy.fap.swp391.entity.Admin;
+
 import com.ngocduy.fap.swp391.model.request.AdminRequest;
 import com.ngocduy.fap.swp391.model.response.AdminResponse;
 import com.ngocduy.fap.swp391.service.AdminService;
