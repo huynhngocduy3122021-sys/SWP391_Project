@@ -76,12 +76,12 @@ public class MemberService implements UserDetailsService {
 
     }
 
-
+    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
     }
-
+    */
 
     // Lấy user chưa bị xóa mềm
     public List<Member> getActiveMembers() {
@@ -98,6 +98,13 @@ public class MemberService implements UserDetailsService {
     public Member getCurrentMember() {
         return (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
     }
+
+    // Get member by ID
+    public Member getMemberById(Long id) {
+        return memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+    }
+
     //update
     public Member updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {

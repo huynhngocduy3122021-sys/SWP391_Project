@@ -28,7 +28,7 @@ public class OrderController {
     }
 
     // Get order by ID
-    @GetMapping("/getById")
+    @GetMapping("/getById/{id}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long id) {
         OrderResponse order = orderService.getOrderById(id);
         return ResponseEntity.ok(order);
@@ -36,7 +36,7 @@ public class OrderController {
 
     // Get orders by member ID
     @GetMapping("/member/{memberId}")
-    public ResponseEntity<List<OrderResponse>> getOrdersByMemberId(@Valid @PathVariable Long memberId) {
+    public ResponseEntity<List<OrderResponse>> getOrdersByMemberId(@PathVariable Long memberId) {
         List<OrderResponse> orders = orderService.getOrdersByMemberId(memberId);
         return ResponseEntity.ok(orders);
     }
@@ -56,7 +56,7 @@ public class OrderController {
     }
 
     // Update order
-    @PutMapping("/updateOrder")
+    @PutMapping("/updateOrder/{id}")
     public ResponseEntity<OrderResponse> updateOrder(
             @PathVariable Long id,
             @RequestBody OrderRequest request) {
@@ -65,7 +65,7 @@ public class OrderController {
     }
 
     // Delete order
-    @DeleteMapping("/deleteOrder")
+    @DeleteMapping("/deleteOrder/{id}")
     public ResponseEntity<Void> deleteOrder(@PathVariable Long id) {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();

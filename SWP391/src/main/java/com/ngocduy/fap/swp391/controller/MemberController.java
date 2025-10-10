@@ -26,7 +26,7 @@ public class MemberController {
 
 
     @PostMapping("/register")
-    public ResponseEntity register(@Valid @RequestBody Member member) {
+    public ResponseEntity<Member> register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
         Member newMember = memberService.register(member);
@@ -35,30 +35,38 @@ public class MemberController {
 
     //login*
     @PostMapping("/login")
-    public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<MemberResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         // đưa qua memberService xử lí
         MemberResponse member = memberService.login(loginRequest);
         return ResponseEntity.ok(member);
     }
 
 
-
+    /*
     //test get all member
     @GetMapping("/allmember")
-    public ResponseEntity getAllMember() {
+    public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
+     */
 
     //test member hien dang login
     @GetMapping("/current")
-    public ResponseEntity getCurrentMember() {
+    public ResponseEntity<Member> getCurrentMember() {
         return ResponseEntity.ok(memberService.getCurrentMember());
     }
 
+    // GET member by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
+        Member member = memberService.getMemberById(id);
+        return ResponseEntity.ok(member);
+    }
+
     //  UPDATE
-    @PutMapping("/update")
-    public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
+    @PutMapping("/update/{id}")
+    public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
         Member updated = memberService.updateMember(id, request);
         if (updated == null) {
             return ResponseEntity.notFound().build();
@@ -76,8 +84,8 @@ public class MemberController {
     }
 
     //  DELETE
-    @DeleteMapping("/delete")
-    public ResponseEntity<?> deleteMember(@PathVariable Long id) {
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<String> deleteMember(@PathVariable Long id) {
         boolean deleted = memberService.deleteMember(id);
         if (!deleted) {
             return ResponseEntity.notFound().build();

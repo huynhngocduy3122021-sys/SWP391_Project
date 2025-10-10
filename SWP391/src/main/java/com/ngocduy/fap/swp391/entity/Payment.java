@@ -14,6 +14,7 @@ import java.util.List;
 public class Payment {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "PayID")
     private Long payId;
 

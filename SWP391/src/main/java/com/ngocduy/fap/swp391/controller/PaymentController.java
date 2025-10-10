@@ -27,7 +27,7 @@ public class PaymentController {
     }
 
     // Get payment by ID
-    @GetMapping("/getById")
+    @GetMapping("/getById/{id}")
     public ResponseEntity<PaymentResponse> getPaymentById(@PathVariable Long id) {
         PaymentResponse payment = paymentService.getPaymentById(id);
         return ResponseEntity.ok(payment);
@@ -48,7 +48,7 @@ public class PaymentController {
     }
 
     // Update payment
-    @PutMapping("/updatePayment")
+    @PutMapping("/updatePayment/{id}")
     public ResponseEntity<PaymentResponse> updatePayment(
             @PathVariable Long id,
             @RequestBody PaymentRequest request) {
@@ -57,7 +57,7 @@ public class PaymentController {
     }
 
     // Delete payment
-    @DeleteMapping("/deletePayment")
+    @DeleteMapping("/deletePayment/{id}")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
         paymentService.deletePayment(id);
         return ResponseEntity.noContent().build();

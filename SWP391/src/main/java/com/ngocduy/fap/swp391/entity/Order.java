@@ -15,6 +15,7 @@ import java.time.LocalDate;
 @Table(name = "Orders")
 public class Order implements Serializable {
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "OrderID")
     private Long orderId;
 
