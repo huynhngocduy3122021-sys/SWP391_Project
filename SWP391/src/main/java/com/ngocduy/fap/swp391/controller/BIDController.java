@@ -44,4 +44,26 @@ public class BIDController {
 
     }
 
+    @PutMapping("/{id}")
+    public ResponseEntity updateBID(@Valid @RequestBody BIDRequest bidRequest, @PathVariable Long id) {
+        BID bidUpdate = bidService.updateBID(id , bidRequest);
+        if(bidUpdate==null){
+            return ResponseEntity.notFound().build();
+        } else{
+            return ResponseEntity.ok(bidUpdate);
+        }
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity deleteBID(@PathVariable Long id) {
+       boolean BidDelete = bidService.DeleteBID(id);
+       if(BidDelete){
+           return ResponseEntity.ok().build();
+       } else {
+           return ResponseEntity.notFound().build();
+       }
+    }
+
+
+
 }

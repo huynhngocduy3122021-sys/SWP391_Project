@@ -71,4 +71,27 @@ public class BIDService {
         List<BID> bids = bidRepository.findAll();
         return bids;
     }
+
+    public BID updateBID(Long BidId, BIDRequest bidRequest){
+        BID isExitBid = bidRepository.findBIDByBidId(BidId);
+        if (isExitBid == null) {
+            throw new BIDException("Bid not found");
+        } else {
+            isExitBid.setBidAmount(bidRequest.getBIDAmount());
+            return bidRepository.save(isExitBid);
+        }
+    }
+
+    public boolean  DeleteBID(Long bidId){
+       BID isExitBid = bidRepository.findBIDByBidId(bidId);
+       if (isExitBid == null) {
+           return false;
+       } else {
+           bidRepository.deleteById(bidId);
+           return true;
+       }
+    }
+
+
+
 }
