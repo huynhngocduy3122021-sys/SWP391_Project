@@ -78,7 +78,7 @@ public class Member implements UserDetails {
 
 
 
-    @OneToMany(mappedBy = "memberId")
+    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     @JsonIgnore
     List<Article> articles;
 
@@ -86,4 +86,6 @@ public class Member implements UserDetails {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "admin_id")
     private Admin adminId;
+
+
 }
