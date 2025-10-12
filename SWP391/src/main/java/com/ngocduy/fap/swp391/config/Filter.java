@@ -53,7 +53,7 @@ public class Filter extends OncePerRequestFilter {
             String allowedMethod = parts[0];
             String allowedUri = parts[1];
 
-            return matcher.match(allowedUri, uri);
+            return allowedMethod.equalsIgnoreCase(method) && matcher.match(allowedUri, uri);
         });
 
     }
