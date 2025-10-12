@@ -79,7 +79,7 @@ public class Member implements UserDetails {
 
 
 
-    @OneToMany(mappedBy = "memberId")
+    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     @JsonIgnore
     List<Article> articles;
 
@@ -95,4 +95,5 @@ public class Member implements UserDetails {
     @OneToMany(mappedBy = "member")
     @JsonIgnore
     private List<BID> bids = new ArrayList<>();
+
 }

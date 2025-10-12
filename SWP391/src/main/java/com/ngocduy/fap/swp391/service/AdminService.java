@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -21,7 +20,7 @@ public class AdminService {
 
     private final AdminRepository adminRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ModelMapper modelMapper; // Inject ModelMapper here
+    private final ModelMapper modelMapper;
 
     @Autowired
     public AdminService(AdminRepository adminRepository, PasswordEncoder passwordEncoder, ModelMapper modelMapper) {
@@ -94,16 +93,4 @@ public class AdminService {
         adminRepository.deleteById(id);
     }
 
-    // Keep existing helper methods for internal service use
-    public Optional<Admin> findByEmail(String email) {
-        return adminRepository.findByEmail(email);
-    }
-
-    public boolean existsByEmail(String email) {
-        return adminRepository.existsByEmail(email);
-    }
-
-    public boolean existsByPhone(String phone) {
-        return adminRepository.existsByPhone(phone);
-    }
 }
