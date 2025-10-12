@@ -12,6 +12,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Getter
@@ -68,12 +69,11 @@ public class Article {
     @JoinColumn(name = "approved_admin_id")
     private Admin approvedAdmin;
 
-    @Column(name = "main_img_url", length = 2048) // Common max length for URLs
-    private String mainImgUrl;
-
     @Column(name = "is_deleted")
     private boolean deleted = false;
 
+    @Column(name = "approval_date")
+    private LocalDateTime approvalDate;
 
     public enum ArticleType {
         CAR_ARTICLE,
@@ -88,6 +88,9 @@ public class Article {
         REJECTED,
         ARCHIVED
     }
+
+    @OneToMany(mappedBy = "article", cascade =  CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private List<Image> images;
 
 
 }

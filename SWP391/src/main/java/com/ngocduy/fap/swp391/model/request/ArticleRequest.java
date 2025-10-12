@@ -5,14 +5,22 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.springframework.format.annotation.DateTimeFormat;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Data
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
 public class ArticleRequest {
+
+    private Long articleId;
 
     @NotBlank(message = "Title cannot be blank")
     private String title;
@@ -34,7 +42,7 @@ public class ArticleRequest {
     private Long memberId;
 
     @NotNull(message = "Price cannot be null")
-    @DecimalMin(value = "0.00", inclusive = true, message = "Price must be zero or positive")
+    @DecimalMin(value = "0.00", inclusive = false , message = "Price must be zero or positive")
     private BigDecimal price;
 
     @NotBlank(message = "Status cannot be blank")
@@ -42,5 +50,7 @@ public class ArticleRequest {
 
     private Long approvedAdminId;
 
-    private String mainImgUrl;
+    private List<String> imageUrls; // List of image URLs, first one will be marked as main
+
+
 }

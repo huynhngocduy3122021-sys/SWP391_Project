@@ -7,25 +7,19 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.time.LocalDate;
 
-
-@EqualsAndHashCode(callSuper = false)
+@EqualsAndHashCode(callSuper = true)
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CarArticleResponse extends ArticleResponse{
+public class MotorArticleResponse extends ArticleResponse{
 
     private String brand;
-    private String model;
     private Integer year;
-    private String origin;
-    private String type;
-    private Integer numberOfSeat;
+    private Integer vehicleCapacity;
     private String licensesPlate;
-    private LocalDate registrationDeadline;
+    private String origin;
     private Double milesTraveled;
-    private Integer warrantyPeriodMonths;
-
+    private Integer warrantyMonths;
 }

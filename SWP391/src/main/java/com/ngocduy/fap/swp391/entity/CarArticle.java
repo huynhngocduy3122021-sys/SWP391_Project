@@ -17,8 +17,7 @@ import java.time.LocalDate;
 public class CarArticle {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "car_article_id")
+    @Column(name = "id")
     private long id;
 
     @Column(name = "brand", columnDefinition = "NVARCHAR(255)", nullable = false)
@@ -65,7 +64,8 @@ public class CarArticle {
 
 
     @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "article_id", nullable = false, unique = true)
+    @MapsId
+    @JoinColumn(name = "article_id", referencedColumnName = "article_id")
     private Article article; // No change here, still links to Article
 
 }

@@ -1,18 +1,24 @@
 package com.ngocduy.fap.swp391.model.request;
 
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
-public class CarArticleRequest {
-
-    @NotNull(message = "Article ID is mandatory")
-    private Long articleId; // The ID of the Article this car describes
+@SuperBuilder
+@AllArgsConstructor
+@NoArgsConstructor
+public class CarArticleRequest extends ArticleRequest{
 
     @NotBlank(message = "Brand cannot be empty")
     private String brand;
@@ -36,6 +42,7 @@ public class CarArticleRequest {
 
     private String licensesPlate;
 
+    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate registrationDeadline;
 
     private Double milesTraveled;
