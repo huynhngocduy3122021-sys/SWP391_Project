@@ -26,10 +26,10 @@ public class MemberController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<Member> register(@Valid @RequestBody Member member) {
+    public ResponseEntity<MemberResponse> register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
-        Member newMember = memberService.register(member);
+        MemberResponse newMember = memberService.register(member);
         return ResponseEntity.ok(newMember);
     }
 
@@ -53,44 +53,29 @@ public class MemberController {
 
     //test member hien dang login
     @GetMapping("/current")
-    public ResponseEntity<Member> getCurrentMember() {
+    public ResponseEntity<MemberResponse> getCurrentMember() {
         return ResponseEntity.ok(memberService.getCurrentMember());
     }
 
     // GET member by ID
-    @GetMapping("/getById/{id}")
-    public ResponseEntity<Member> getMemberById(@PathVariable Long id) {
-        Member member = memberService.getMemberById(id);
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberResponse> getMemberById(@PathVariable Long id) {
+        MemberResponse member = memberService.getMemberById(id);
         return ResponseEntity.ok(member);
     }
 
     //  UPDATE
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
-        Member updated = memberService.updateMember(id, request);
-        if (updated == null) {
-            return ResponseEntity.notFound().build();
-        }
-        MemberResponse response = new MemberResponse();
-        response.setMemberId(updated.getMemberId());
-        response.setName(updated.getName());
-        response.setEmail(updated.getEmail());
-        response.setPhone(updated.getPhone());
-        response.setAddress(updated.getAddress());
-        response.setStatus(updated.getStatus());
-        response.setYearOfBirth(updated.getYearOfBirth());
-        response.setSex(updated.getSex());
+        MemberResponse response = memberService.updateMember(id, request);
         return ResponseEntity.ok(response);
     }
 
     //  DELETE
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<String> deleteMember(@PathVariable Long id) {
-        boolean deleted = memberService.deleteMember(id);
-        if (!deleted) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok("Member deleted successfully");
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteMember(@PathVariable Long id) {
+        memberService.deleteMember(id);
+        return ResponseEntity.noContent().build();
     }
 }
 
