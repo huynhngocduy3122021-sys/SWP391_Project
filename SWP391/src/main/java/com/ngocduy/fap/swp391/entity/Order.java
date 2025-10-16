@@ -1,46 +1,50 @@
 package com.ngocduy.fap.swp391.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Entity
 @Getter
 @Setter
+@Table(name = "Orders")
 public class Order implements Serializable {
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name ="OrderID", nullable = false)
-    Long orderId;
+    @Column(name = "OrderID")
+    private Long orderId;
 
-    @Column (name= "TotalAmount", precision = 10, scale = 2)
-    BigDecimal totalAmount;
+    @Column(name = "TotalAmount", precision = 10, scale = 2)
+    private BigDecimal totalAmount;
 
-    @Column(name = "Date", nullable = false, updatable = false)
-    LocalDateTime Date = LocalDateTime.now();
+    @Column(name = "Date")
+    @JsonFormat(pattern = "dd/MM/yyyy")
+    private LocalDate date;
 
     @Column(name = "Status")
-    String status;
+    private String status;
 
     @Column(name = "PaymentStatus")
-    String paymentStatus;
+    private String paymentStatus;
 
-    //Relationship
+    @Column(name = "IsDeleted")
+    private boolean isDeleted = false;
+
+    // Relationships
     @ManyToOne
-    @JoinColumn (name = "MemberID" ,nullable = false)
-    Member member;
+    @JoinColumn(name = "MemberID", nullable = false)
+    private Member member;
 
     @ManyToOne
-    @JoinColumn (name = "PackageID" ,nullable = false)
-    Package pkg;
+    @JoinColumn(name = "PackageID", nullable = false)
+    private Packages pkg;
 
     @ManyToOne
-    @JoinColumn (name = "PayID" ,nullable = false)
-    Payment payment;
-
+    @JoinColumn(name = "PayID", nullable = false)
+    private Payment payment;
 }

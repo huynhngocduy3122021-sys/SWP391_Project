@@ -1,6 +1,5 @@
 package com.ngocduy.fap.swp391.entity;
 
-
 import jakarta.persistence.Embeddable;
 import lombok.Getter;
 import lombok.Setter;
@@ -12,11 +11,10 @@ import java.util.Objects;
 @Getter
 @Setter
 public class SubscriptionId implements Serializable {
-    private Long memberId;
-    private String packageId;
-    public SubscriptionId() {
-    }
-    public SubscriptionId(Long memberId, String packageId) {
+    long memberId;
+    long packageId;
+    public SubscriptionId() {}
+    public SubscriptionId(long memberId, long packageId) {
         this.memberId = memberId;
         this.packageId = packageId;
     }
@@ -27,8 +25,8 @@ public class SubscriptionId implements Serializable {
         if (!(o instanceof SubscriptionId)) return false;
         SubscriptionId that = (SubscriptionId) o;
         return Objects.equals(memberId, that.memberId) && Objects.equals(packageId, that.packageId);
-
     }
+
     @Override
     public int hashCode() {
         return Objects.hash(memberId, packageId);

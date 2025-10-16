@@ -33,9 +33,10 @@ public class Filter extends OncePerRequestFilter {
     TokenService tokenService;
 
     private final List<String> PUBLIC_API = List.of(
-            "POST:/api/member",
-            "POST:/api/login",
-            "GET:/api/member",
+            "POST:/api/members",
+            "POST:/api/members/login",
+            "GET:/api/members",
+            "POST:/api/admin",
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
             "GET:/swagger-resources/**"
@@ -52,7 +53,7 @@ public class Filter extends OncePerRequestFilter {
             String allowedMethod = parts[0];
             String allowedUri = parts[1];
 
-            return matcher.match(allowedUri, uri);
+            return allowedMethod.equalsIgnoreCase(method) && matcher.match(allowedUri, uri);
         });
 
     }

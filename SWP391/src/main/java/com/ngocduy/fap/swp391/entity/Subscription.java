@@ -3,40 +3,36 @@ package com.ngocduy.fap.swp391.entity;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.format.annotation.DateTimeFormat;
 
-import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Getter
 @Setter
-public class Subscription implements Serializable {
-
+public class Subscription {
     @EmbeddedId
     private SubscriptionId id;
 
-    @Column (name = "StartDate", nullable = false)
-    @DateTimeFormat(pattern = "dd/MM/yyyy")
-    LocalDateTime startDate;
+    @Column(name = "StartDate")
+    private LocalDateTime startDate;
 
-    @Column (name = "EndDate")
-    @DateTimeFormat(pattern = "dd/MM/yyyy")
-    LocalDateTime endDate;
+    @Column(name = "EndDate")
+    private LocalDateTime endDate;
 
-    @Column (name = "Status")
-    String status;
+    @Column(name = "Status")
+    private String status;
 
-    //Relationship
+    @Column(name = "IsDeleted")
+    private boolean isDeleted = false;
+
+    // Relationships
     @ManyToOne
     @MapsId("memberId")
     @JoinColumn(name = "MemberID")
-    Member member;
+    private Member member;
 
     @ManyToOne
-    @MapsId ("packageId")
+    @MapsId("packageId")
     @JoinColumn(name = "PackageID")
-    Package pkg;
-
-
+    private Packages pkg;
 }
