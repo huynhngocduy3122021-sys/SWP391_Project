@@ -11,6 +11,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -99,6 +100,7 @@ public class AuctionService {
       }
 
       // update
+
     public Auction updateAuction(Long id, AuctionRequest auctionRequest) {
         Auction existingAuction = auctionRepository.findAuctionByAucID(id);
         if(existingAuction == null) {
@@ -114,6 +116,22 @@ public class AuctionService {
             return auctionRepository.save(existingAuction);
         }
     }
+
+    @Scheduled(fixedRate = 60000) // chạy mỗi 1p
+    @Transactional
+    public void updateAuctionStatus() {
+        List<Auction> auctions = auctionRepository.findAll();
+        LocalDateTime now = LocalDateTime.now();
+        for(Auction auction : auctions) {
+            String newStatus = getAuctionStatus(now, auction.getEndTime());
+            if(!newStatus.equals(auction.getStatus())) {
+                auction.setStatus(newStatus);
+                auctionRepository.save(auction);
+            }
+        }
+    }
+
+
 
 
 
