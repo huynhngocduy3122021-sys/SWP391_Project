@@ -23,7 +23,7 @@ public class Order implements Serializable {
     private BigDecimal totalAmount;
 
     @Column(name = "Date")
-    @JsonFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 
     @Column(name = "Status")

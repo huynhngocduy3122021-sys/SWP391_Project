@@ -48,7 +48,7 @@ public class PackageController {
     }
 
     // Update package
-    @PutMapping("/update/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<PackagesResponse> updatePackage(
             @PathVariable Long id,
             @RequestBody PackagesRequest request) {
@@ -57,7 +57,7 @@ public class PackageController {
     }
 
     // Delete package (soft delete)
-    @DeleteMapping("/delete/{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePackage(@PathVariable Long id) {
         packagesService.deletePackage(id);
         return ResponseEntity.noContent().build();

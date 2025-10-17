@@ -27,7 +27,7 @@ public class SubscriptionController {
     }
 
     // Get subscription by composite ID
-    @GetMapping("/getById/{memberId}/{packageId}")
+    @GetMapping("/{memberId}/{packageId}")
     public ResponseEntity<SubscriptionResponse> getSubscriptionById(
             @PathVariable Long memberId,
             @PathVariable Long packageId) {
