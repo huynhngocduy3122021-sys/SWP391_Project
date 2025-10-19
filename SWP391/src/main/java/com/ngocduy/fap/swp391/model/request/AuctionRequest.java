@@ -24,4 +24,7 @@ public class AuctionRequest {
     private double price;
     @NotNull
     private double increment;
+    @NotNull
+    Long memberId;
+
 }

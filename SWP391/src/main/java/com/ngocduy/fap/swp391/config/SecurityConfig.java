@@ -43,6 +43,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
                         req -> req
+                                //Cho phép endpoint WebSocket
+                                .requestMatchers("/ws/**", "/topic/**", "/app/**").permitAll()
                                 .requestMatchers("/**")
                                 .permitAll()
                                 .anyRequest()

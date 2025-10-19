@@ -19,23 +19,27 @@ import java.util.List;
 @Service
 public class BIDService {
 
-    @Autowired
-    TokenService tokenService;
+
     @Autowired
     BIDRepository bidRepository;
     @Autowired
     AuctionRepository auctionRepository;
+    @Autowired
+    MemberRepository memberRepository;
 
 
-    public BIDResponse addBid(BIDRequest bidRequest , String token){
+    public BIDResponse addBid(BIDRequest bidRequest ){
 
 
-            String cleanToken = token.trim();
-            Member member = tokenService.extractToken(cleanToken);
+
             Auction auction = auctionRepository.findAuctionByAucID(bidRequest.getAuctionId());
+            Member member = memberRepository.findMemberByMemberId(bidRequest.getMember());
 
             if (auction == null) {
                 throw new BIDException("Auction not found" + bidRequest.getAuctionId());
+            }
+            if (member == null) {
+                throw new BIDException("Member not found" + bidRequest.getMember());
             }
 
             double minBid = auction.getPrice() + auction.getIncrement();
