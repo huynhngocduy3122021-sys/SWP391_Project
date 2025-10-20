@@ -4,6 +4,8 @@ import com.ngocduy.fap.swp391.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
@@ -13,11 +15,12 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Member findMemberByMemberId(long memberId);
 
-    /*Chỉ lấy member chưa bị xóa
+    Member findMemberByPhone(String phone);
+
+    //Chỉ lấy member chưa bị xóa
     Optional<Member> findByEmailAndDeletedFalse(String email);
 
     //  Lấy toàn bộ member chưa bị xóa
     List<Member> findAllByDeletedFalse();
-*/
 
 }
