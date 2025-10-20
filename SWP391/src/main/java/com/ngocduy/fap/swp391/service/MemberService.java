@@ -17,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.resource.ResourceTransformer;
 
 import java.util.List;
 
@@ -38,8 +39,10 @@ public class MemberService implements UserDetailsService {
 
      @Autowired
      private TokenService tokenService;
+    @Autowired
+    private ResourceTransformer resourceTransformer;
 
-    public Member register(Member member) {
+    public Member register(MemberRequest member) {
         // Xử lý logic cho register
         if(memberRepository.findByPhone(member.getPhone()) != null){
             throw new DuplicateResourceException("Phone already exists");
@@ -48,11 +51,12 @@ public class MemberService implements UserDetailsService {
             throw new DuplicateResourceException("Email already exists");
         }
 
-
         member.setPassword(passwordEncoder.encode(member.getPassword()));
+        Member newMember = modelMapper.map(member, Member.class);
+
         //ma hoa mk
         //luu DB
-        return memberRepository.save(member);
+        return memberRepository.save(newMember);
     }
 
     //login*
@@ -76,6 +80,7 @@ public class MemberService implements UserDetailsService {
             throw new AuthenticationException("Account has been deleted or disabled");
         }
            */
+
 
           //member => memberResponse
           //==> maping bằng ModelMapper
