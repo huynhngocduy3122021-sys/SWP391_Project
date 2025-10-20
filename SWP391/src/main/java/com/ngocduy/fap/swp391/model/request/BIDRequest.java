@@ -9,5 +9,6 @@ public class BIDRequest {
      Double BIDAmount;
     @NotNull
     Long auctionId;
+    Long member;
 
 }
