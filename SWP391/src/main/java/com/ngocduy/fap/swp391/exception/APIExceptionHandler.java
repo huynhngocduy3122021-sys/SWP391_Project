@@ -3,6 +3,7 @@ package com.ngocduy.fap.swp391.exception;
 
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.exception.exceptions.BIDException;
+import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
@@ -60,7 +61,10 @@ public class APIExceptionHandler {
         return ResponseEntity.status(401).body(exception.getMessage());
     }
 
-
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity handleDuplicateResourceException(DuplicateResourceException exception) {
+        return ResponseEntity.status(409).body(exception.getMessage());
+    }
 
 
 

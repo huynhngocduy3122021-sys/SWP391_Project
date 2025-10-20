@@ -66,8 +66,8 @@ public class Article {
     private ArticleStatus status;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approved_admin_id")
-    private Admin approvedAdmin;
+    @JoinColumn(name = "approved_member_id")
+    private Member approvedBy;
 
     @Column(name = "is_deleted")
     private boolean deleted = false;

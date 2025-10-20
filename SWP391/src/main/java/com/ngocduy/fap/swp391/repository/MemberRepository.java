@@ -13,6 +13,9 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Member findMemberByMemberId(long memberId);
 
+    Member findByPhone(String phone);
+
+    Member findByEmail(String email);
     /*Chỉ lấy member chưa bị xóa
     Optional<Member> findByEmailAndDeletedFalse(String email);
 

@@ -20,9 +20,12 @@ import java.util.List;
 public class MemberController {
 
     // điều hướng (controller) => xử lý logic (service) => lưu DB (repository) (JPA)
-    @Autowired
-    MemberService memberService;
+    private final MemberService memberService;
 
+    @Autowired
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
+    }
 
 
     @PostMapping()

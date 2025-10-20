@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
@@ -23,23 +24,31 @@ import java.util.List;
 public class MemberService implements UserDetailsService {
 
 
-    @Autowired
-    MemberRepository memberRepository;
+     @Autowired
+     private MemberRepository memberRepository;
 
      @Autowired
-    PasswordEncoder passwordEncoder;
+     private PasswordEncoder passwordEncoder;
 
      @Autowired
-     AuthenticationManager authenticationManager;
+     private AuthenticationManager authenticationManager;
 
      @Autowired
-     ModelMapper modelMapper;
+     private ModelMapper modelMapper;
 
      @Autowired
-     TokenService tokenService;
+     private TokenService tokenService;
 
     public Member register(Member member) {
         // Xử lý logic cho register
+        if(memberRepository.findByPhone(member.getPhone()) != null){
+            throw new DuplicateResourceException("Phone already exists");
+        }
+        if (memberRepository.findByEmail(member.getEmail()) != null){
+            throw new DuplicateResourceException("Email already exists");
+        }
+
+
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         //ma hoa mk
         //luu DB
@@ -103,13 +112,22 @@ public class MemberService implements UserDetailsService {
     //update
     public Member updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {
-            existing.setName(request.getName());
-            existing.setEmail(request.getEmail());
-            existing.setPhone(request.getPhone());
-            existing.setAddress(request.getAddress());
-            existing.setYearOfBirth(request.getYearOfBirth());
-            existing.setSex(request.getSex());
-            existing.setStatus(request.getStatus());
+            // Check email uniqueness if changed
+            if (request.getEmail() != null && !request.getEmail().equals(existing.getEmail())) {
+                if (memberRepository.findMemberByEmail(request.getEmail()) != null) {
+                    throw new DuplicateResourceException("Email already in use");
+                }
+            }
+            // Check phone uniqueness if changed
+            if (request.getPhone() != null && !request.getPhone().equals(existing.getPhone())) {
+                if (memberRepository.findByPhone(request.getPhone()) != null) {
+                    throw new DuplicateResourceException("Phone already in use");
+                }
+            }
+            // Use ModelMapper to map non-null fields from request to existing
+            modelMapper.map(request, existing);
+
+            // Handle password separately (only if provided)
             if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                 existing.setPassword(passwordEncoder.encode(request.getPassword()));
             }

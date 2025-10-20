@@ -9,14 +9,14 @@ import java.time.LocalDate;
 public class MemberResponse {
 
 
-    long memberId;
-    String name;
-    String address;
-    LocalDate yearOfBirth;
-    String phone;
-    String email;
-    String status;
-    String sex;
-    String token;
+    private long memberId;
+    private String name;
+    private String address;
+    private LocalDate yearOfBirth;
+    private String phone;
+    private String email;
+    private String status;
+    private String sex;
+    private String token;
 
 }
