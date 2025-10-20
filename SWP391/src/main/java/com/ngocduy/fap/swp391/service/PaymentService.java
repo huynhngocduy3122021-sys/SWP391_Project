@@ -45,7 +45,10 @@ public class PaymentService {
         payment.setMethod(request.getMethod());
         payment.setTransactionCode(request.getTransactionCode());
         payment.setAmount(request.getAmount());
-        payment.setStatus(request.getStatus());
+        // status sẽ dùng giá trị mặc định "PENDING" nếu không truyền
+        if (request.getStatus() != null) {
+            payment.setStatus(request.getStatus());
+        }
         payment.setPaymentDate(LocalDateTime.now());
         
         Payment savedPayment = paymentRepository.save(payment);
@@ -72,6 +75,48 @@ public class PaymentService {
                 .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
         payment.setDeleted(true);
         paymentRepository.save(payment);
+    }
+
+    // Process payment - mark as COMPLETED
+    public PaymentResponse processPayment(Long id) {
+        Payment payment = paymentRepository.findByPayIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
+        
+        if (!"PENDING".equals(payment.getStatus())) {
+            throw new IllegalStateException("Can only process PENDING payments");
+        }
+        
+        payment.setStatus("COMPLETED");
+        payment.setPaymentDate(LocalDateTime.now());
+        
+        Payment updatedPayment = paymentRepository.save(payment);
+        return convertToResponse(updatedPayment);
+    }
+
+    // Mark payment as FAILED
+    public PaymentResponse failPayment(Long id, String reason) {
+        Payment payment = paymentRepository.findByPayIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
+        
+        payment.setStatus("FAILED");
+        
+        Payment updatedPayment = paymentRepository.save(payment);
+        return convertToResponse(updatedPayment);
+    }
+
+    // Refund payment
+    public PaymentResponse refundPayment(Long id) {
+        Payment payment = paymentRepository.findByPayIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
+        
+        if (!"COMPLETED".equals(payment.getStatus())) {
+            throw new IllegalStateException("Can only refund COMPLETED payments");
+        }
+        
+        payment.setStatus("REFUNDED");
+        
+        Payment updatedPayment = paymentRepository.save(payment);
+        return convertToResponse(updatedPayment);
     }
 
     // Convert entity to response

@@ -70,4 +70,34 @@ public class OrderController {
         orderService.deleteOrder(id);
         return ResponseEntity.noContent().build();
     }
+
+    // Confirm order
+    @PatchMapping("/{id}/confirm")
+    public ResponseEntity<OrderResponse> confirmOrder(@PathVariable Long id) {
+        OrderResponse order = orderService.confirmOrder(id);
+        return ResponseEntity.ok(order);
+    }
+
+    // Complete order
+    @PatchMapping("/{id}/complete")
+    public ResponseEntity<OrderResponse> completeOrder(@PathVariable Long id) {
+        OrderResponse order = orderService.completeOrder(id);
+        return ResponseEntity.ok(order);
+    }
+
+    // Cancel order
+    @PatchMapping("/{id}/cancel")
+    public ResponseEntity<OrderResponse> cancelOrder(@PathVariable Long id) {
+        OrderResponse order = orderService.cancelOrder(id);
+        return ResponseEntity.ok(order);
+    }
+
+    // Update payment status
+    @PatchMapping("/{id}/payment-status")
+    public ResponseEntity<OrderResponse> updatePaymentStatus(
+            @PathVariable Long id,
+            @RequestParam String paymentStatus) {
+        OrderResponse order = orderService.updatePaymentStatus(id, paymentStatus);
+        return ResponseEntity.ok(order);
+    }
 }

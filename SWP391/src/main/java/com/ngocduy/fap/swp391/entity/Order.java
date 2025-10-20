@@ -27,10 +27,10 @@ public class Order implements Serializable {
     private LocalDate date;
 
     @Column(name = "Status")
-    private String status;
+    private String status = "PENDING";
 
     @Column(name = "PaymentStatus")
-    private String paymentStatus;
+    private String paymentStatus = "UNPAID";
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;
