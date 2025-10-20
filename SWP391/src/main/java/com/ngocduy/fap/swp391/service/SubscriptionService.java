@@ -73,7 +73,10 @@ public class SubscriptionService {
         subscription.setId(id);
         subscription.setStartDate(request.getStartDate());
         subscription.setEndDate(request.getEndDate());
-        subscription.setStatus(request.getStatus());
+        // status sẽ dùng giá trị mặc định "ACTIVE" nếu không truyền
+        if (request.getStatus() != null) {
+            subscription.setStatus(request.getStatus());
+        }
         subscription.setMember(member);
         subscription.setPkg(pkg);
 
@@ -102,6 +105,46 @@ public class SubscriptionService {
                 .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
         subscription.setDeleted(true);
         subscriptionRepository.save(subscription);
+    }
+
+    // Activate subscription
+    public SubscriptionResponse activateSubscription(Long memberId, Long packageId) {
+        SubscriptionId id = new SubscriptionId(memberId, packageId);
+        Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
+
+        subscription.setStatus("ACTIVE");
+
+        Subscription updatedSubscription = subscriptionRepository.save(subscription);
+        return convertToResponse(updatedSubscription);
+    }
+
+    // Expire subscription
+    public SubscriptionResponse expireSubscription(Long memberId, Long packageId) {
+        SubscriptionId id = new SubscriptionId(memberId, packageId);
+        Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
+
+        subscription.setStatus("EXPIRED");
+
+        Subscription updatedSubscription = subscriptionRepository.save(subscription);
+        return convertToResponse(updatedSubscription);
+    }
+
+    // Cancel subscription
+    public SubscriptionResponse cancelSubscription(Long memberId, Long packageId) {
+        SubscriptionId id = new SubscriptionId(memberId, packageId);
+        Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
+                .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
+
+        if ("EXPIRED".equals(subscription.getStatus())) {
+            throw new IllegalStateException("Cannot cancel expired subscription");
+        }
+
+        subscription.setStatus("CANCELLED");
+
+        Subscription updatedSubscription = subscriptionRepository.save(subscription);
+        return convertToResponse(updatedSubscription);
     }
 
     // Convert entity to response

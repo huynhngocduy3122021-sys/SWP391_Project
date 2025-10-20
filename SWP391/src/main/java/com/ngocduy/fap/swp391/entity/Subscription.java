@@ -23,7 +23,7 @@ public class Subscription {
     private LocalDateTime endDate;
 
     @Column(name = "Status")
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;
