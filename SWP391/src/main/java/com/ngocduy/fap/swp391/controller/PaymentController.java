@@ -62,4 +62,28 @@ public class PaymentController {
         paymentService.deletePayment(id);
         return ResponseEntity.noContent().build();
     }
+
+    // Process payment (mark as COMPLETED)
+    @PatchMapping("/{id}/process")
+    public ResponseEntity<PaymentResponse> processPayment(@PathVariable Long id) {
+        PaymentResponse payment = paymentService.processPayment(id);
+        return ResponseEntity.ok(payment);
+    }
+
+    // Mark payment as FAILED
+    @PatchMapping("/{id}/fail")
+    public ResponseEntity<PaymentResponse> failPayment(
+            @PathVariable Long id,
+            @RequestParam(required = false) String reason) {
+        PaymentResponse payment = paymentService.failPayment(id, reason);
+        return ResponseEntity.ok(payment);
+    }
+
+    // Refund payment
+    @PatchMapping("/{id}/refund")
+    public ResponseEntity<PaymentResponse> refundPayment(@PathVariable Long id) {
+        PaymentResponse payment = paymentService.refundPayment(id);
+        return ResponseEntity.ok(payment);
+    }
+
 }
