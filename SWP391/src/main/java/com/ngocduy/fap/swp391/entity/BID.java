@@ -17,11 +17,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class BID {
-    //+BIDId : Long(PK), not nul
-    //+ AucID : Nvarchar(FK), notnulll
-    //+ MemberID : Nvarchar(FK), not null
-    //+ BIDAmount : Decimal
-    //+ Time : timestamp
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "BIDId")

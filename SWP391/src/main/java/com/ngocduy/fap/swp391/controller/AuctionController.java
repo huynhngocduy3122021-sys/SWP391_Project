@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +21,8 @@ import java.util.List;
 public class AuctionController {
     @Autowired
     AuctionService auctionService;
+    @Autowired
+    SimpMessagingTemplate simpMessagingTemplate;
 
     @GetMapping()
     public ResponseEntity getAuction(){
@@ -28,21 +31,12 @@ public class AuctionController {
     }
 
     @PostMapping
-    public ResponseEntity<?> createAuction(
-            @RequestBody AuctionRequest auctionRequest,
-            @RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<AuctionResponse> createAuction(@Valid @RequestBody AuctionRequest auctionRequest) {
+        AuctionResponse auctionResponse = auctionService.createAuction(auctionRequest);
 
-        // Kiểm tra header có giá trị không
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-        }
+        simpMessagingTemplate.convertAndSend("/topic/auction/create", auctionResponse);
 
-        // Cắt bỏ prefix "Bearer "
-        String token = authHeader.substring(7); // bỏ 7 ký tự đầu "Bearer "
-
-        AuctionResponse response = auctionService.createAuction(auctionRequest, token);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(auctionResponse);
     }
 
     @DeleteMapping("/{id}")

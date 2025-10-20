@@ -67,6 +67,8 @@ public class MemberService implements UserDetailsService {
         // b1 : lấy userName(Email) và password
         // b2 : tìm trong DB có account nào giống với UserName không(loadUserByUsername)
         // b3 : AuthenticationManager => so sanh tài khoảng và password dưới db <==> với password người dunùng nhập(authenticationManager)
+//        Member member = new Member();
+//        boolean checkAccount = member.
           Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                   login.getEmail(),
                   login.getPassword()

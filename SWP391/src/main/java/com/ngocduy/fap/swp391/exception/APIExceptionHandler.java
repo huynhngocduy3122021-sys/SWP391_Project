@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.exception;
 
 
+import com.ngocduy.fap.swp391.exception.exceptions.AuctionException;
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.exception.exceptions.BIDException;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
@@ -76,5 +77,11 @@ public class APIExceptionHandler {
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
+    @ExceptionHandler(AuctionException.class)
+    public ResponseEntity handleAuctionException(AuctionException exception) {
+        return ResponseEntity.status(401).body(exception.getMessage());
+    }
+
+
 
 }
