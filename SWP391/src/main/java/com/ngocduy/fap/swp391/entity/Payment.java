@@ -31,7 +31,7 @@ public class Payment {
     private LocalDateTime paymentDate;
 
     @Column(name = "Status")
-    private String status = "PENDING";
+    private String status;
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;

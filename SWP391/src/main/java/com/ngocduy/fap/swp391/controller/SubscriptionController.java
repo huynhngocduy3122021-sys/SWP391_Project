@@ -74,31 +74,4 @@ public class SubscriptionController {
         subscriptionService.deleteSubscription(memberId, packageId);
         return ResponseEntity.noContent().build();
     }
-
-    // Activate subscription
-    @PatchMapping("/{memberId}/{packageId}/activate")
-    public ResponseEntity<SubscriptionResponse> activateSubscription(
-            @PathVariable Long memberId,
-            @PathVariable Long packageId) {
-        SubscriptionResponse subscription = subscriptionService.activateSubscription(memberId, packageId);
-        return ResponseEntity.ok(subscription);
-    }
-
-    // Expire subscription
-    @PatchMapping("/{memberId}/{packageId}/expire")
-    public ResponseEntity<SubscriptionResponse> expireSubscription(
-            @PathVariable Long memberId,
-            @PathVariable Long packageId) {
-        SubscriptionResponse subscription = subscriptionService.expireSubscription(memberId, packageId);
-        return ResponseEntity.ok(subscription);
-    }
-
-    // Cancel subscription
-    @PatchMapping("/{memberId}/{packageId}/cancel")
-    public ResponseEntity<SubscriptionResponse> cancelSubscription(
-            @PathVariable Long memberId,
-            @PathVariable Long packageId) {
-        SubscriptionResponse subscription = subscriptionService.cancelSubscription(memberId, packageId);
-        return ResponseEntity.ok(subscription);
-    }
 }

@@ -65,13 +65,8 @@ public class OrderService {
         Order order = new Order();
         order.setTotalAmount(request.getTotalAmount());
         order.setDate(request.getDate());
-        // status và paymentStatus sẽ dùng giá trị mặc định từ entity nếu không truyền
-        if (request.getStatus() != null) {
-            order.setStatus(request.getStatus());
-        }
-        if (request.getPaymentStatus() != null) {
-            order.setPaymentStatus(request.getPaymentStatus());
-        }
+        order.setStatus(request.getStatus());
+        order.setPaymentStatus(request.getPaymentStatus());
 
         // Set relationships
         Member member = memberRepository.findById(request.getMemberId())
@@ -129,73 +124,6 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
         order.setDeleted(true);
         orderRepository.save(order);
-    }
-
-    // Confirm order (change status to CONFIRMED)
-    public OrderResponse confirmOrder(Long id) {
-        Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
-        
-        // Only confirm if payment is PAID
-        if (!"PAID".equals(order.getPaymentStatus())) {
-            throw new IllegalStateException("Cannot confirm order. Payment status must be PAID");
-        }
-        
-        order.setStatus("CONFIRMED");
-        Order updatedOrder = orderRepository.save(order);
-        return convertToResponse(updatedOrder);
-    }
-
-    // Complete order (change status to COMPLETED)
-    public OrderResponse completeOrder(Long id) {
-        Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
-        
-        // Only complete if order is CONFIRMED
-        if (!"CONFIRMED".equals(order.getStatus())) {
-            throw new IllegalStateException("Cannot complete order. Order must be CONFIRMED first");
-        }
-        
-        order.setStatus("COMPLETED");
-        Order updatedOrder = orderRepository.save(order);
-        return convertToResponse(updatedOrder);
-    }
-
-    // Cancel order
-    public OrderResponse cancelOrder(Long id) {
-        Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
-        
-        // Cannot cancel if already COMPLETED
-        if ("COMPLETED".equals(order.getStatus())) {
-            throw new IllegalStateException("Cannot cancel completed order");
-        }
-        
-        order.setStatus("CANCELLED");
-        
-        // If payment was made, mark for refund
-        if ("PAID".equals(order.getPaymentStatus())) {
-            order.setPaymentStatus("REFUNDED");
-        }
-        
-        Order updatedOrder = orderRepository.save(order);
-        return convertToResponse(updatedOrder);
-    }
-
-    // Update payment status after payment is processed
-    public OrderResponse updatePaymentStatus(Long id, String paymentStatus) {
-        Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
-        
-        order.setPaymentStatus(paymentStatus);
-        
-        // Auto-confirm order if payment is successful
-        if ("PAID".equals(paymentStatus) && "PENDING".equals(order.getStatus())) {
-            order.setStatus("CONFIRMED");
-        }
-        
-        Order updatedOrder = orderRepository.save(order);
-        return convertToResponse(updatedOrder);
     }
 
     // Convert entity to response
