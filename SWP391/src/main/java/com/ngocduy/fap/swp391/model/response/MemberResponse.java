@@ -16,6 +16,7 @@ public class MemberResponse {
     private String phone;
     private String email;
     private String status;
+    private String role;
     private String sex;
     private String token;
 
