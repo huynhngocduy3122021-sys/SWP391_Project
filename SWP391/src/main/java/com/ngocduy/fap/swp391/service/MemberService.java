@@ -42,7 +42,7 @@ public class MemberService implements UserDetailsService {
     @Autowired
     private ResourceTransformer resourceTransformer;
 
-    public Member register(MemberRequest member) {
+    public MemberResponse register(MemberRequest member) {
         // Xử lý logic cho register
         if(memberRepository.findByPhone(member.getPhone()) != null){
             throw new DuplicateResourceException("Phone already exists");
@@ -53,10 +53,11 @@ public class MemberService implements UserDetailsService {
 
         member.setPassword(passwordEncoder.encode(member.getPassword()));
         Member newMember = modelMapper.map(member, Member.class);
+        Member savedMember = memberRepository.save(newMember);
 
         //ma hoa mk
         //luu DB
-        return memberRepository.save(newMember);
+        return convertToResponse(savedMember);
     }
 
     //login*
@@ -124,7 +125,7 @@ public class MemberService implements UserDetailsService {
     }
 
     //update
-    public Member updateMember(Long id, MemberRequest request) {
+    public MemberResponse updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {
             // Check email uniqueness if changed
             if (request.getEmail() != null && !request.getEmail().equals(existing.getEmail())) {
@@ -145,7 +146,8 @@ public class MemberService implements UserDetailsService {
             if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                 existing.setPassword(passwordEncoder.encode(request.getPassword()));
             }
-            return memberRepository.save(existing);
+            Member updated = memberRepository.save(existing);
+            return convertToResponse(updated);
         }).orElse(null);
     }
     //delete

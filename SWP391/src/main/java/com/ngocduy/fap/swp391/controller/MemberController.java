@@ -29,7 +29,7 @@ public class MemberController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<MemberResponse> register(@Valid @RequestBody Member member) {
+    public ResponseEntity<MemberResponse> register(@Valid @RequestBody MemberRequest member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
         MemberResponse newMember = memberService.register(member);
