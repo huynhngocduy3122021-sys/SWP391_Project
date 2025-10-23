@@ -15,9 +15,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Member findMemberByMemberId(long memberId);
 
-    Member findMemberByPhone(String phone);
+    Member findByPhone(String phone);
 
-    //Chỉ lấy member chưa bị xóa
+    Member findByEmail(String email);
+    /*Chỉ lấy member chưa bị xóa
     Optional<Member> findByEmailAndDeletedFalse(String email);
 
     //  Lấy toàn bộ member chưa bị xóa

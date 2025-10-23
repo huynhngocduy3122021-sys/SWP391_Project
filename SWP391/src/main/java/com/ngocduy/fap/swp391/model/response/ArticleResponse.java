@@ -28,8 +28,8 @@ public class ArticleResponse {
     private String memberName; // To display member name directly in response
     private BigDecimal price;
     private String status;
-    private long approvedAdminId;
-    private String approvedAdminName; // To display admin name directly in response
+    private long approvedById;
+    private String approvedByName;
     private boolean deleted;
     private List<ImageResponse> images; // List of all images
     private String mainImageUrl; // URL of the main image for convenience

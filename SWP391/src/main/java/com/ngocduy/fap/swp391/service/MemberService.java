@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.resource.ResourceTransformer;
 
 import java.util.List;
 
@@ -23,41 +25,38 @@ import java.util.List;
 public class MemberService implements UserDetailsService {
 
 
+     @Autowired
+     private MemberRepository memberRepository;
+
+     @Autowired
+     private PasswordEncoder passwordEncoder;
+
+     @Autowired
+     private AuthenticationManager authenticationManager;
+
+     @Autowired
+     private ModelMapper modelMapper;
+
+     @Autowired
+     private TokenService tokenService;
     @Autowired
-    MemberRepository memberRepository;
+    private ResourceTransformer resourceTransformer;
 
-     @Autowired
-    PasswordEncoder passwordEncoder;
-
-     @Autowired
-     AuthenticationManager authenticationManager;
-
-     @Autowired
-     ModelMapper modelMapper;
-
-     @Autowired
-     TokenService tokenService;
-
-    public MemberResponse register(Member member) {
-        // Check if email already exists
-        Member existingEmail = memberRepository.findMemberByEmail(member.getEmail());
-        if (existingEmail != null) {
-            throw new RuntimeException("Email already exists");
-        }
-        
-        // Check if phone already exists
-        Member existingPhone = memberRepository.findMemberByPhone(member.getPhone());
-        if (existingPhone != null) {
-            throw new RuntimeException("Phone number already exists");
-        }
-        
+    public Member register(MemberRequest member) {
         // Xử lý logic cho register
+        if(memberRepository.findByPhone(member.getPhone()) != null){
+            throw new DuplicateResourceException("Phone already exists");
+        }
+        if (memberRepository.findByEmail(member.getEmail()) != null){
+            throw new DuplicateResourceException("Email already exists");
+        }
+
         member.setPassword(passwordEncoder.encode(member.getPassword()));
+        Member newMember = modelMapper.map(member, Member.class);
+
         //ma hoa mk
         //luu DB
-        Member savedMember = memberRepository.save(member);
-        // Convert Entity -> Response
-        return convertToResponse(savedMember);
+        return memberRepository.save(newMember);
     }
 
     //login*
@@ -81,6 +80,7 @@ public class MemberService implements UserDetailsService {
             throw new AuthenticationException("Account has been deleted or disabled");
         }
            */
+
 
           //member => memberResponse
           //==> maping bằng ModelMapper
@@ -124,48 +124,29 @@ public class MemberService implements UserDetailsService {
     }
 
     //update
-    public MemberResponse updateMember(Long id, MemberRequest request) {
-        Member existing = memberRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
-        
-        // Check if email is being changed and if it already exists
-        if (request.getEmail() != null && !request.getEmail().equals(existing.getEmail())) {
-            Member existingEmail = memberRepository.findMemberByEmail(request.getEmail());
-            if (existingEmail != null) {
-                throw new RuntimeException("Email already exists");
+    public Member updateMember(Long id, MemberRequest request) {
+        return memberRepository.findById(id).map(existing -> {
+            // Check email uniqueness if changed
+            if (request.getEmail() != null && !request.getEmail().equals(existing.getEmail())) {
+                if (memberRepository.findMemberByEmail(request.getEmail()) != null) {
+                    throw new DuplicateResourceException("Email already in use");
+                }
             }
-            existing.setEmail(request.getEmail());
-        }
-        
-        // Check if phone is being changed and if it already exists
-        if (request.getPhone() != null && !request.getPhone().equals(existing.getPhone())) {
-            Member existingPhone = memberRepository.findMemberByPhone(request.getPhone());
-            if (existingPhone != null) {
-                throw new RuntimeException("Phone number already exists");
+            // Check phone uniqueness if changed
+            if (request.getPhone() != null && !request.getPhone().equals(existing.getPhone())) {
+                if (memberRepository.findByPhone(request.getPhone()) != null) {
+                    throw new DuplicateResourceException("Phone already in use");
+                }
             }
-            existing.setPhone(request.getPhone());
-        }
-        
-        if (request.getName() != null) {
-            existing.setName(request.getName());
-        }
-        if (request.getAddress() != null) {
-            existing.setAddress(request.getAddress());
-        }
-        if (request.getYearOfBirth() != null) {
-            existing.setYearOfBirth(request.getYearOfBirth());
-        }
-        if (request.getSex() != null) {
-            existing.setSex(request.getSex());
-        }
-        if (request.getStatus() != null) {
-            existing.setStatus(request.getStatus());
-        }
-        if (request.getPassword() != null && !request.getPassword().isEmpty()) {
-            existing.setPassword(passwordEncoder.encode(request.getPassword()));
-        }
-        Member updated = memberRepository.save(existing);
-        return convertToResponse(updated);
+            // Use ModelMapper to map non-null fields from request to existing
+            modelMapper.map(request, existing);
+
+            // Handle password separately (only if provided)
+            if (request.getPassword() != null && !request.getPassword().isEmpty()) {
+                existing.setPassword(passwordEncoder.encode(request.getPassword()));
+            }
+            return memberRepository.save(existing);
+        }).orElse(null);
     }
     //delete
     public void deleteMember(Long id) {

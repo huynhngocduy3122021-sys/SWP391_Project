@@ -85,14 +85,14 @@ public class ArticleController {
     }
 
     @PostMapping("/{articleId}/approve")
-    public ResponseEntity<ArticleResponse> approveArticle(@PathVariable Long articleId, @RequestParam("adminId") Long adminId) {
-        ArticleResponse approvedArticle = articleService.approveArticle(articleId, adminId);
+    public ResponseEntity<ArticleResponse> approveArticle(@PathVariable Long articleId, @RequestParam("memberId") Long memberId) {
+        ArticleResponse approvedArticle = articleService.approveArticle(articleId, memberId);
         return ResponseEntity.ok(approvedArticle);
     }
 
     @PostMapping("/{articleId}/reject")
-    public ResponseEntity<ArticleResponse> rejectArticle(@PathVariable Long articleId, @RequestParam("adminId") Long adminId) {
-        ArticleResponse rejectedArticle = articleService.rejectArticle(articleId, adminId);
+    public ResponseEntity<ArticleResponse> rejectArticle(@PathVariable Long articleId, @RequestParam("memberId") Long memberId) {
+        ArticleResponse rejectedArticle = articleService.rejectArticle(articleId, memberId);
         return ResponseEntity.ok(rejectedArticle);
     }
 
