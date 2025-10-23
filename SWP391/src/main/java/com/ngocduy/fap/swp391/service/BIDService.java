@@ -43,20 +43,20 @@ public class BIDService {
             }
 
             double minBid = auction.getPrice() + auction.getIncrement();
-            if (bidRequest.getBIDAmount() < minBid) {
+            if (bidRequest.getBidAmount() < minBid) {
                 throw new BIDException("Bid amount must be greater than or equal to " + minBid);
             }
 
             Double highestBid = bidRepository.findHighestBIDAmount(auction);
-            if (highestBid != null && highestBid >= bidRequest.getBIDAmount()) {
+            if (highestBid != null && highestBid >= bidRequest.getBidAmount()) {
                 throw new BIDException("Your bid must be higher than the highest bid: " + highestBid);
             }
             // lưu lại giá của auction
-            auction.setPrice(bidRequest.getBIDAmount());
+            auction.setPrice(bidRequest.getBidAmount());
             auctionRepository.save(auction);
 
             BID bid = BID.builder()
-                    .bidAmount(bidRequest.getBIDAmount())
+                    .bidAmount(bidRequest.getBidAmount())
                     .bidDate(LocalDateTime.now())
                     .member(member)
                     .auction(auction)
@@ -66,7 +66,7 @@ public class BIDService {
 
             return BIDResponse.builder()
                     .presentPrice(auction.getPrice())
-                    .YourPrice(bidRequest.getBIDAmount())
+                    .YourPrice(bidRequest.getBidAmount())
                     .build();
     }
 
@@ -81,7 +81,7 @@ public class BIDService {
         if (isExitBid == null) {
             throw new BIDException("Bid not found");
         } else {
-            isExitBid.setBidAmount(bidRequest.getBIDAmount());
+            isExitBid.setBidAmount(bidRequest.getBidAmount());
             return bidRepository.save(isExitBid);
         }
     }
