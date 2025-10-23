@@ -1,5 +1,6 @@
 package com.ngocduy.fap.swp391.controller;
 
+import com.ngocduy.fap.swp391.model.request.OrderRequest;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.service.PaymentService;
@@ -86,4 +87,17 @@ public class PaymentController {
         return ResponseEntity.ok(payment);
     }
 
+    //B1: nhờ bên thứ 3 (VNPAY)
+    //tạo ra link thanh toán
+    @PostMapping("/create-url")
+    public ResponseEntity<String> createPaymentURL(@RequestBody OrderRequest orderRequest) throws Exception {
+        String paymentURL = paymentService.createPaymentURL(orderRequest);
+        return ResponseEntity.ok(paymentURL);
+    }
+
+    //B2: lắng nghe trạng thái thanh toán
+
+    //B3: Return kết quả lại cho mình (BE)
+    // => status => update lại thông tin order
+    // tạo ra những cái transaction
 }
