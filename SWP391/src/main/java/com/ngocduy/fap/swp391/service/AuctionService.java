@@ -2,15 +2,18 @@ package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Auction;
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.AuctionException;
 import com.ngocduy.fap.swp391.model.request.AuctionRequest;
 import com.ngocduy.fap.swp391.model.response.AuctionResponse;
 import com.ngocduy.fap.swp391.repository.AuctionRepository;
+import com.ngocduy.fap.swp391.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +31,11 @@ public class AuctionService {
     TokenService tokenService;
     @Autowired
     AuctionRepository auctionRepository;
+    @Autowired
+    MemberRepository memberRepository;
+
+    @Autowired
+    SimpMessagingTemplate simpMessagingTemplate;
 
     public List<AuctionResponse> getAllAuction(){
         List<Auction> auctions = auctionRepository.findAll();
@@ -49,8 +57,11 @@ public class AuctionService {
 
     //tạo đấu giá
 
-    public AuctionResponse createAuction(AuctionRequest auctionRequest , String token) {
-        Member member = tokenService.extractToken(token);
+    public AuctionResponse createAuction(AuctionRequest auctionRequest) {
+     Member member = memberRepository.findMemberByMemberId(auctionRequest.getMemberId());
+     if(member == null){
+            throw new AuctionException("Auction not found!!");
+     }
 
         String status = getAuctionStatus(auctionRequest.getStartTime() , auctionRequest.getEndTime());
 
@@ -116,16 +127,20 @@ public class AuctionService {
         }
     }
 
-    @Scheduled(fixedRate = 60000) // chạy mỗi 1p
+    @Scheduled(fixedRate = 10000) // chạy mỗi 1p
     @Transactional
     public void updateAuctionStatus() {
         List<Auction> auctions = auctionRepository.findAll();
         LocalDateTime now = LocalDateTime.now();
+
         for(Auction auction : auctions) {
             String newStatus = getAuctionStatus(now, auction.getEndTime());
             if(!newStatus.equals(auction.getStatus())) {
                 auction.setStatus(newStatus);
                 auctionRepository.save(auction);
+
+                // gửi thông báo realtime đến user
+                simpMessagingTemplate.convertAndSend("/topic/aution/status" , "Auction " + auction.getAucID() + " Changed to " + newStatus) ;
             }
         }
     }

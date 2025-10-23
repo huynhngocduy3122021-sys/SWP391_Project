@@ -1,4 +1,4 @@
-package com.ngocduy.fap.swp391.controller;
+ package com.ngocduy.fap.swp391.controller;
 
 
 import com.ngocduy.fap.swp391.entity.Member;
@@ -28,64 +28,57 @@ public class MemberController {
     }
 
 
-    @PostMapping()
-    public ResponseEntity register(@Valid @RequestBody MemberRequest member) {
+    @PostMapping("/register")
+    public ResponseEntity<MemberResponse> register(@Valid @RequestBody Member member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
-        Member newMember = memberService.register(member);
+        MemberResponse newMember = memberService.register(member);
         return ResponseEntity.ok(newMember);
     }
 
     //login*
     @PostMapping("/login")
-    public ResponseEntity login(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<MemberResponse> login(@Valid @RequestBody LoginRequest loginRequest) {
         // đưa qua memberService xử lí
         MemberResponse member = memberService.login(loginRequest);
         return ResponseEntity.ok(member);
     }
 
 
-
+    /*
     //test get all member
-    @GetMapping()
-    public ResponseEntity getAllMember() {
+    @GetMapping("/allmember")
+    public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
+     */
 
     //test member hien dang login
     @GetMapping("/current")
-    public ResponseEntity getCurrentMember() {
+    public ResponseEntity<MemberResponse> getCurrentMember() {
         return ResponseEntity.ok(memberService.getCurrentMember());
+    }
+
+    // GET member by ID
+    @GetMapping("/{id}")
+    public ResponseEntity<MemberResponse> getMemberById(@PathVariable Long id) {
+        MemberResponse member = memberService.getMemberById(id);
+        return ResponseEntity.ok(member);
     }
 
     //  UPDATE
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateMember(@PathVariable Long id, @RequestBody MemberRequest request) {
-        Member updated = memberService.updateMember(id, request);
-        if (updated == null) {
-            return ResponseEntity.notFound().build();
-        }
-        MemberResponse response = new MemberResponse();
-        response.setMemberId(updated.getMemberId());
-        response.setName(updated.getName());
-        response.setEmail(updated.getEmail());
-        response.setPhone(updated.getPhone());
-        response.setAddress(updated.getAddress());
-        response.setStatus(updated.getStatus());
-        response.setYearOfBirth(updated.getYearOfBirth());
-        response.setSex(updated.getSex());
+    public ResponseEntity<MemberResponse> updateMember(@PathVariable Long id, @Valid @RequestBody MemberRequest request) {
+        MemberResponse response = memberService.updateMember(id, request);
         return ResponseEntity.ok(response);
     }
 
     //  DELETE
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteMember(@PathVariable Long id) {
-        boolean deleted = memberService.deleteMember(id);
-        if (!deleted) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok("Member deleted successfully");
+    public ResponseEntity<Void> deleteMember(@PathVariable Long id) {
+        memberService.deleteMember(id);
+        return ResponseEntity.noContent().build();
     }
 }
 

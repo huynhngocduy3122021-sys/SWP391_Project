@@ -1,11 +1,13 @@
 package com.ngocduy.fap.swp391.exception;
 
 
+import com.ngocduy.fap.swp391.exception.exceptions.AuctionException;
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.exception.exceptions.BIDException;
 import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -61,9 +63,24 @@ public class APIExceptionHandler {
         return ResponseEntity.status(401).body(exception.getMessage());
     }
 
-    @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity handleDuplicateResourceException(DuplicateResourceException exception) {
-        return ResponseEntity.status(409).body(exception.getMessage());
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity handleRuntimeException(RuntimeException exception) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exception.getMessage());
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        String message = "Database constraint violation";
+        if (exception.getMessage().contains("email")) {
+            message = "Email already exists";
+        } else if (exception.getMessage().contains("phone")) {
+            message = "Phone number already exists";
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
+    }
+    @ExceptionHandler(AuctionException.class)
+    public ResponseEntity handleAuctionException(AuctionException exception) {
+        return ResponseEntity.status(401).body(exception.getMessage());
     }
 
 

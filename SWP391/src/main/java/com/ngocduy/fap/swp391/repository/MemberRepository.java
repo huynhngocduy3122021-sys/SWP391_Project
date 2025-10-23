@@ -4,6 +4,8 @@ import com.ngocduy.fap.swp391.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface MemberRepository extends JpaRepository<Member, Long> {
@@ -21,6 +23,5 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     //  Lấy toàn bộ member chưa bị xóa
     List<Member> findAllByDeletedFalse();
-*/
 
 }

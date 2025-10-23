@@ -92,18 +92,18 @@ public class MemberService implements UserDetailsService {
 
     }
 
-
+    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
     }
+    */
 
-    /*
-    // Get all active members
-    public List<Member> getAllMembers() {
+    // Lấy user chưa bị xóa mềm
+    public List<Member> getActiveMembers() {
         return memberRepository.findAllByDeletedFalse();
     }
-     */
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -111,9 +111,18 @@ public class MemberService implements UserDetailsService {
         return memberRepository.findMemberByEmail(email);
     }
 
-    public Member getCurrentMember() {
-        return (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public MemberResponse getCurrentMember() {
+        Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return convertToResponse(member);
     }
+
+    // Get member by ID
+    public MemberResponse getMemberById(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+        return convertToResponse(member);
+    }
+
     //update
     public Member updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {
@@ -140,12 +149,25 @@ public class MemberService implements UserDetailsService {
         }).orElse(null);
     }
     //delete
-    public boolean deleteMember(Long id) {
-        return memberRepository.findById(id).map(member -> {
-            member.setDeleted(true);
-            memberRepository.save(member);
-            return true;
-        }).orElse(false);
+    public void deleteMember(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+        member.setDeleted(true);
+        memberRepository.save(member);
+    }
+
+    // Helper method: Convert Entity -> Response
+    private MemberResponse convertToResponse(Member member) {
+        MemberResponse response = new MemberResponse();
+        response.setMemberId(member.getMemberId());
+        response.setName(member.getName());
+        response.setEmail(member.getEmail());
+        response.setPhone(member.getPhone());
+        response.setAddress(member.getAddress());
+        response.setYearOfBirth(member.getYearOfBirth());
+        response.setSex(member.getSex());
+        response.setStatus(member.getStatus());
+        return response;
     }
 
 }

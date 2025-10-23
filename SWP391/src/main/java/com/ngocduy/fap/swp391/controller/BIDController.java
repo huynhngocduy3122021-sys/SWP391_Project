@@ -9,6 +9,7 @@ import jakarta.validation.Valid;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,17 +22,18 @@ public class BIDController {
     @Autowired
     BIDService bidService;
 
-    @PostMapping
-    public ResponseEntity<?> addBId(@Valid @RequestBody BIDRequest bid,
-                                    @RequestHeader("Authorization") String authHeader) {
-        // Kiểm tra header có giá trị không
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
-        }
+    @Autowired
+    private SimpMessagingTemplate simpMessagingTemplate;
 
-        // Cắt bỏ prefix "Bearer "
-        String token = authHeader.substring(7); // bỏ 7 ký tự đầu "Bearer "
-        BIDResponse bidResponse = bidService.addBid(bid, token);
+    @PostMapping
+    public ResponseEntity<?> addBId(@Valid @RequestBody BIDRequest bid)
+                                     {
+
+        BIDResponse bidResponse = bidService.addBid(bid);
+        // gửi real time
+        String topic = "/topic/auction/" + bid.getAuctionId();
+        simpMessagingTemplate.convertAndSend(topic, bidResponse);
+        System.out.println("📢 Sent to topic: /topic/auction/" + bid.getAuctionId());
         return ResponseEntity.ok(bidResponse);
 
     }
