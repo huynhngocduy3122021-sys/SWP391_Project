@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.List;
 
 @Entity
@@ -29,8 +28,11 @@ public class Packages implements Serializable {
     @Column(name = "Description")
     private String description;
 
-    @Column(name = "Price", precision = 10, scale = 2)
-    private BigDecimal price;
+    @Column(name = "Price")
+    private float price;
+
+    @Column(name = "DurationDays")
+    private Integer durationDays; // Duration in days (e.g., 30, 60, 90)
 
     @Column(name= "IsActive")
     private boolean isActive = true;

@@ -3,7 +3,8 @@ package com.ngocduy.fap.swp391.service;
 import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.entity.Order;
 import com.ngocduy.fap.swp391.entity.Packages;
-import com.ngocduy.fap.swp391.entity.Payment;
+import com.ngocduy.fap.swp391.enums.OrderStatus;
+import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.OrderRequest;
 import com.ngocduy.fap.swp391.model.response.OrderResponse;
@@ -14,6 +15,7 @@ import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,38 +57,33 @@ public class OrderService {
 
     // Get orders by status (excluding deleted)
     public List<OrderResponse> getOrdersByStatus(String status) {
-        return orderRepository.findByStatusAndIsDeletedFalse(status).stream()
+        OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+        return orderRepository.findByStatusAndIsDeletedFalse(orderStatus).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
     }
 
     // Create order
     public OrderResponse createOrder(OrderRequest request) {
-        Order order = new Order();
-        order.setTotalAmount(request.getTotalAmount());
-        order.setDate(request.getDate());
-        // status và paymentStatus sẽ dùng giá trị mặc định từ entity nếu không truyền
-        if (request.getStatus() != null) {
-            order.setStatus(request.getStatus());
-        }
-        if (request.getPaymentStatus() != null) {
-            order.setPaymentStatus(request.getPaymentStatus());
-        }
-
-        // Set relationships
-        Member member = memberRepository.findById(request.getMemberId())
-                .orElseThrow(() -> new NotFoundException("Member not found with id: " + request.getMemberId()));
-        order.setMember(member);
-
+        // 1. Lấy thông tin package và member
         Packages pkg = packagesRepository.findById(request.getPackageId())
                 .orElseThrow(() -> new NotFoundException("Package not found with id: " + request.getPackageId()));
+
+        Member member = memberRepository.findById(request.getMemberId())
+                .orElseThrow(() -> new NotFoundException("Member not found with id: " + request.getMemberId()));
+
+        // 2. Tạo đơn hàng với trạng thái PENDING
+        Order order = new Order();
+        order.setMember(member);
         order.setPkg(pkg);
+        order.setTotalAmount(pkg.getPrice());
+        order.setDate(LocalDate.now());
+        order.setStatus(OrderStatus.PENDING);
+        order.setPaymentStatus(PaymentStatus.PENDING);
 
-        Payment payment = paymentRepository.findById(request.getPayId())
-                .orElseThrow(() -> new NotFoundException("Payment not found with id: " + request.getPayId()));
-        order.setPayment(payment);
-
+        // 3. Lưu đơn hàng (không tạo Payment ở đây)
         Order savedOrder = orderRepository.save(order);
+
         return convertToResponse(savedOrder);
     }
 
@@ -94,11 +91,6 @@ public class OrderService {
     public OrderResponse updateOrder(Long id, OrderRequest request) {
         Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
-
-        order.setTotalAmount(request.getTotalAmount());
-        order.setDate(request.getDate());
-        order.setStatus(request.getStatus());
-        order.setPaymentStatus(request.getPaymentStatus());
 
         // Update relationships if changed
         if (request.getMemberId() != null) {
@@ -111,12 +103,7 @@ public class OrderService {
             Packages pkg = packagesRepository.findById(request.getPackageId())
                     .orElseThrow(() -> new NotFoundException("Package not found with id: " + request.getPackageId()));
             order.setPkg(pkg);
-        }
-
-        if (request.getPayId() != null) {
-            Payment payment = paymentRepository.findById(request.getPayId())
-                    .orElseThrow(() -> new NotFoundException("Payment not found with id: " + request.getPayId()));
-            order.setPayment(payment);
+            order.setTotalAmount(pkg.getPrice());
         }
 
         Order updatedOrder = orderRepository.save(order);
@@ -137,11 +124,11 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
 
         // Only confirm if payment is PAID
-        if (!"PAID".equals(order.getPaymentStatus())) {
+        if (order.getPaymentStatus() != PaymentStatus.PAID) {
             throw new IllegalStateException("Cannot confirm order. Payment status must be PAID");
         }
 
-        order.setStatus("CONFIRMED");
+        order.setStatus(OrderStatus.CONFIRMED);
         Order updatedOrder = orderRepository.save(order);
         return convertToResponse(updatedOrder);
     }
@@ -152,11 +139,11 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
 
         // Only complete if order is CONFIRMED
-        if (!"CONFIRMED".equals(order.getStatus())) {
+        if (order.getStatus() != OrderStatus.CONFIRMED) {
             throw new IllegalStateException("Cannot complete order. Order must be CONFIRMED first");
         }
 
-        order.setStatus("COMPLETED");
+        order.setStatus(OrderStatus.COMPLETED);
         Order updatedOrder = orderRepository.save(order);
         return convertToResponse(updatedOrder);
     }
@@ -167,15 +154,15 @@ public class OrderService {
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
 
         // Cannot cancel if already COMPLETED
-        if ("COMPLETED".equals(order.getStatus())) {
+        if (order.getStatus() == OrderStatus.COMPLETED) {
             throw new IllegalStateException("Cannot cancel completed order");
         }
 
-        order.setStatus("CANCELLED");
+        order.setStatus(OrderStatus.CANCELLED);
 
         // If payment was made, mark for refund
-        if ("PAID".equals(order.getPaymentStatus())) {
-            order.setPaymentStatus("REFUNDED");
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            order.setPaymentStatus(PaymentStatus.REFUNDED);
         }
 
         Order updatedOrder = orderRepository.save(order);
@@ -183,15 +170,16 @@ public class OrderService {
     }
 
     // Update payment status after payment is processed
-    public OrderResponse updatePaymentStatus(Long id, String paymentStatus) {
+    public OrderResponse updatePaymentStatus(Long id, String paymentStatusStr) {
         Order order = orderRepository.findByOrderIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + id));
 
+        PaymentStatus paymentStatus = PaymentStatus.valueOf(paymentStatusStr);
         order.setPaymentStatus(paymentStatus);
 
         // Auto-confirm order if payment is successful
-        if ("PAID".equals(paymentStatus) && "PENDING".equals(order.getStatus())) {
-            order.setStatus("CONFIRMED");
+        if (paymentStatus == PaymentStatus.PAID && order.getStatus() == OrderStatus.PENDING) {
+            order.setStatus(OrderStatus.CONFIRMED);
         }
 
         Order updatedOrder = orderRepository.save(order);
@@ -217,8 +205,12 @@ public class OrderService {
             response.setPackageName(order.getPkg().getName());
         }
         
-        if (order.getPayment() != null) {
-            response.setPayId(order.getPayment().getPayId());
+        // Lấy payment thành công cuối cùng nếu có
+        if (order.getPayments() != null && !order.getPayments().isEmpty()) {
+            order.getPayments().stream()
+                .filter(p -> "SUCCESS".equals(p.getStatus()) || "COMPLETED".equals(p.getStatus()))
+                .findFirst()
+                .ifPresent(p -> response.setPayId(p.getPayId()));
         }
         
         return response;

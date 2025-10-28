@@ -1,5 +1,6 @@
 package com.ngocduy.fap.swp391.model.request;
 
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -10,5 +11,5 @@ public class SubscriptionRequest {
     private Long packageId;
     private LocalDateTime startDate;
     private LocalDateTime endDate;
-    private String status;
+    private SubscriptionStatus status;
 }

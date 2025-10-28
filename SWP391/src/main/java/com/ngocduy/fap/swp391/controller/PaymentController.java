@@ -1,8 +1,14 @@
 package com.ngocduy.fap.swp391.controller;
 
-import com.ngocduy.fap.swp391.model.request.OrderRequest;
+import com.ngocduy.fap.swp391.entity.Order;
+import com.ngocduy.fap.swp391.entity.Payment;
+import com.ngocduy.fap.swp391.enums.OrderStatus;
+import com.ngocduy.fap.swp391.enums.PaymentStatus;
+import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
+import com.ngocduy.fap.swp391.repository.OrderRepository;
+import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import com.ngocduy.fap.swp391.service.PaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,7 +16,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @SecurityRequirement(name = "api")
@@ -19,6 +27,12 @@ public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
+    
+    @Autowired
+    private PaymentRepository paymentRepository;
+    
+    @Autowired
+    private OrderRepository orderRepository;
 
     // Get all payments
     @GetMapping
@@ -48,12 +62,12 @@ public class PaymentController {
         return ResponseEntity.status(HttpStatus.CREATED).body(payment);
     }
 
-    // Update payment
-    @PutMapping("/{id}")
-    public ResponseEntity<PaymentResponse> updatePayment(
+    // Update payment status
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<PaymentResponse> updatePaymentStatus(
             @PathVariable Long id,
-            @RequestBody PaymentRequest request) {
-        PaymentResponse payment = paymentService.updatePayment(id, request);
+            @RequestParam String status) {
+        PaymentResponse payment = paymentService.updatePaymentStatus(id, status);
         return ResponseEntity.ok(payment);
     }
 
@@ -87,17 +101,97 @@ public class PaymentController {
         return ResponseEntity.ok(payment);
     }
 
-    //B1: nhờ bên thứ 3 (VNPAY)
-    //tạo ra link thanh toán
-    @PostMapping("/create-url")
-    public ResponseEntity<String> createPaymentURL(@RequestBody OrderRequest orderRequest) throws Exception {
-        String paymentURL = paymentService.createPaymentURL(orderRequest);
+
+    // Create VNPAY payment URL for existing order
+    @PostMapping("/vnpay/create-url")
+    public ResponseEntity<String> createPaymentURL(@RequestParam Long orderId) throws Exception {
+        String paymentURL = paymentService.createPaymentURL(orderId);
         return ResponseEntity.ok(paymentURL);
     }
 
-    //B2: lắng nghe trạng thái thanh toán
-
-    //B3: Return kết quả lại cho mình (BE)
-    // => status => update lại thông tin order
-    // tạo ra những cái transaction
+    // Handle VNPAY return callback - Success
+    @GetMapping("/vnpay/return/success/{orderId}")
+    public ResponseEntity<String> handleVnpaySuccess(
+            @PathVariable Long orderId,
+            @RequestParam Map<String, String> params) {
+        try {
+            String vnpResponseCode = params.get("vnp_ResponseCode");
+            String vnpTxnRef = params.get("vnp_TxnRef");
+            String vnpAmount = params.get("vnp_Amount");
+            String vnpBankCode = params.get("vnp_BankCode");
+            String vnpTransactionNo = params.get("vnp_TransactionNo");
+            String vnpPayDate = params.get("vnp_PayDate");
+            
+            if ("00".equals(vnpResponseCode)) {
+                // 1. Tìm Payment theo vnpTxnRef
+                Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
+                        .orElseThrow(() -> new NotFoundException("Payment not found with txnRef: " + vnpTxnRef));
+                
+                // 2. Cập nhật Payment
+                payment.setStatus("COMPLETED");
+                payment.setVnpTransactionNo(vnpTransactionNo);
+                payment.setVnpBankCode(vnpBankCode);
+                payment.setVnpPayDate(vnpPayDate);
+                payment.setVnpResponseCode(vnpResponseCode);
+                paymentRepository.save(payment);
+                
+                // 3. Cập nhật Order
+                Order order = payment.getOrder();
+                order.setPaymentStatus(PaymentStatus.PAID);
+                order.setStatus(OrderStatus.CONFIRMED);
+                orderRepository.save(order);
+                
+                // 4. TODO: Tạo Subscription nếu cần
+                // subscriptionService.createSubscriptionFromOrder(orderId);
+                
+                return ResponseEntity.ok(
+                    "Payment successful!\n" +
+                    "Order ID: " + orderId + "\n" +
+                    "Transaction: " + vnpTransactionNo + "\n" +
+                    "Amount: " + vnpAmount + " VND"
+                );
+            } else {
+                // Thanh toán thất bại - cập nhật Payment status
+                Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
+                        .orElseThrow(() -> new NotFoundException("Payment not found"));
+                payment.setStatus("FAILED");
+                payment.setVnpResponseCode(vnpResponseCode);
+                paymentRepository.save(payment);
+                
+                return ResponseEntity.ok("Payment failed with code: " + vnpResponseCode);
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error: " + e.getMessage());
+        }
+    }
+    
+    // Handle VNPAY return callback - General (for backward compatibility)
+    @GetMapping("/vnpay/return/vnp")
+    public ResponseEntity<Map<String, Object>> handleVnpayReturn(@RequestParam Map<String, String> params) {
+        try {
+            String vnpResponseCode = params.get("vnp_ResponseCode");
+            String vnpTxnRef = params.get("vnp_TxnRef");
+            String vnpAmount = params.get("vnp_Amount");
+            
+            Map<String, Object> result = new HashMap<>();
+            
+            if ("00".equals(vnpResponseCode)) {
+                result.put("success", true);
+                result.put("message", "Payment successful");
+                result.put("transactionRef", vnpTxnRef);
+                result.put("amount", vnpAmount);
+            } else {
+                result.put("success", false);
+                result.put("message", "Payment failed with code: " + vnpResponseCode);
+            }
+            
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("success", false);
+            errorResult.put("message", "Error: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.scheduler;
 
 import com.ngocduy.fap.swp391.entity.Subscription;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.repository.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,11 +26,11 @@ public class SubscriptionScheduler {
 
         // Tìm tất cả subscription ACTIVE đã hết hạn
         List<Subscription> expiredSubscriptions = subscriptionRepository
-                .findExpiredSubscriptions("ACTIVE", now);
+                .findExpiredSubscriptions(SubscriptionStatus.ACTIVE.name(), now);
 
         // Cập nhật trạng thái thành EXPIRED
         for (Subscription subscription : expiredSubscriptions) {
-            subscription.setStatus("EXPIRED");
+            subscription.setStatus(SubscriptionStatus.EXPIRED);
             subscriptionRepository.save(subscription);
         }
 
@@ -46,10 +47,10 @@ public class SubscriptionScheduler {
         LocalDateTime now = LocalDateTime.now();
 
         List<Subscription> expiredSubscriptions = subscriptionRepository
-                .findExpiredSubscriptions("ACTIVE", now);
+                .findExpiredSubscriptions(SubscriptionStatus.ACTIVE.name(), now);
 
         for (Subscription subscription : expiredSubscriptions) {
-            subscription.setStatus("EXPIRED");
+            subscription.setStatus(SubscriptionStatus.EXPIRED);
             subscriptionRepository.save(subscription);
         }
     }
