@@ -4,6 +4,7 @@ import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.entity.Packages;
 import com.ngocduy.fap.swp391.entity.Subscription;
 import com.ngocduy.fap.swp391.entity.SubscriptionId;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.SubscriptionRequest;
 import com.ngocduy.fap.swp391.model.response.SubscriptionResponse;
@@ -27,6 +28,9 @@ public class SubscriptionService {
 
     @Autowired
     private PackagesRepository packagesRepository;
+
+    @Autowired
+    private com.ngocduy.fap.swp391.repository.OrderRepository orderRepository;
 
     // Get all subscriptions (excluding deleted)
     public List<SubscriptionResponse> getAllSubscriptions() {
@@ -113,7 +117,7 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
 
-        subscription.setStatus("ACTIVE");
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         return convertToResponse(updatedSubscription);
@@ -125,7 +129,7 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
 
-        subscription.setStatus("EXPIRED");
+        subscription.setStatus(SubscriptionStatus.EXPIRED);
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         return convertToResponse(updatedSubscription);
@@ -137,14 +141,54 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
 
-        if ("EXPIRED".equals(subscription.getStatus())) {
+        if (subscription.getStatus() == SubscriptionStatus.EXPIRED) {
             throw new IllegalStateException("Cannot cancel expired subscription");
         }
 
-        subscription.setStatus("CANCELLED");
+        subscription.setStatus(SubscriptionStatus.CANCELLED);
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         return convertToResponse(updatedSubscription);
+    }
+
+    // Auto-create subscription from successful order
+    public SubscriptionResponse createSubscriptionFromOrder(Long orderId) {
+        // Get order details (need to inject OrderRepository)
+        com.ngocduy.fap.swp391.entity.Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
+
+        Long memberId = order.getMember().getMemberId();
+        Long packageId = order.getPkg().getPackageId();
+
+        // Check if active subscription already exists
+        SubscriptionId id = new SubscriptionId(memberId, packageId);
+        java.util.Optional<Subscription> existingSub = subscriptionRepository.findByIdAndIsDeletedFalse(id);
+        
+        if (existingSub.isPresent() && existingSub.get().getStatus() == SubscriptionStatus.ACTIVE) {
+            throw new IllegalStateException("Member already has an active subscription for this package");
+        }
+
+        // Get member and package
+        Member member = order.getMember();
+        Packages pkg = order.getPkg();
+
+        // Validate package has duration
+        if (pkg.getDurationDays() == null || pkg.getDurationDays() <= 0) {
+            throw new IllegalStateException("Package must have a valid duration");
+        }
+
+        // Create new subscription
+        Subscription subscription = new Subscription();
+        subscription.setId(id);
+        subscription.setMember(member);
+        subscription.setPkg(pkg);
+        subscription.setStartDate(java.time.LocalDateTime.now());
+        subscription.setEndDate(java.time.LocalDateTime.now().plusDays(pkg.getDurationDays()));
+        subscription.setRemainingPosts(pkg.getNumberOfPost());
+        subscription.setStatus(SubscriptionStatus.ACTIVE);
+
+        Subscription savedSubscription = subscriptionRepository.save(subscription);
+        return convertToResponse(savedSubscription);
     }
 
     // Convert entity to response
@@ -155,6 +199,7 @@ public class SubscriptionService {
         response.setStartDate(subscription.getStartDate());
         response.setEndDate(subscription.getEndDate());
         response.setStatus(subscription.getStatus());
+        response.setRemainingPosts(subscription.getRemainingPosts());
 
         if (subscription.getMember() != null) {
             response.setMemberName(subscription.getMember().getName());
