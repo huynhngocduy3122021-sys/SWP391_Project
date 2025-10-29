@@ -37,6 +37,9 @@ public class Filter extends OncePerRequestFilter {
             "POST:/api/members/login",
             "GET:/api/members",
             "POST:/api/admin",
+            "POST:/api/payment/**",
+            "GET:/api/payment/**",
+            "PATCH:/api/payment/**",
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
             "GET:/swagger-resources/**"
@@ -53,7 +56,7 @@ public class Filter extends OncePerRequestFilter {
             String allowedMethod = parts[0];
             String allowedUri = parts[1];
 
-            return matcher.match(allowedUri, uri);
+            return allowedMethod.equalsIgnoreCase(method) && matcher.match(allowedUri, uri);
         });
 
     }
@@ -65,6 +68,12 @@ public class Filter extends OncePerRequestFilter {
 
         String uri = request.getRequestURI();
         String method = request.getMethod();
+
+        //Bỏ qua WebSocket handshake
+        if (uri.startsWith("/ws")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
 
         if(isPublicAPI(uri , method)){
             //api public

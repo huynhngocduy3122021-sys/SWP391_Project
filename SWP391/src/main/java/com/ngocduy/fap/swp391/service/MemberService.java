@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
@@ -16,6 +17,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.resource.ResourceTransformer;
 
 import java.util.List;
 
@@ -23,27 +25,39 @@ import java.util.List;
 public class MemberService implements UserDetailsService {
 
 
+     @Autowired
+     private MemberRepository memberRepository;
+
+     @Autowired
+     private PasswordEncoder passwordEncoder;
+
+     @Autowired
+     private AuthenticationManager authenticationManager;
+
+     @Autowired
+     private ModelMapper modelMapper;
+
+     @Autowired
+     private TokenService tokenService;
     @Autowired
-    MemberRepository memberRepository;
+    private ResourceTransformer resourceTransformer;
 
-     @Autowired
-    PasswordEncoder passwordEncoder;
-
-     @Autowired
-     AuthenticationManager authenticationManager;
-
-     @Autowired
-     ModelMapper modelMapper;
-
-     @Autowired
-     TokenService tokenService;
-
-    public Member register(Member member) {
+    public MemberResponse register(MemberRequest member) {
         // Xử lý logic cho register
+        if(memberRepository.findByPhone(member.getPhone()) != null){
+            throw new DuplicateResourceException("Phone already exists");
+        }
+        if (memberRepository.findByEmail(member.getEmail()) != null){
+            throw new DuplicateResourceException("Email already exists");
+        }
+
         member.setPassword(passwordEncoder.encode(member.getPassword()));
+        Member newMember = modelMapper.map(member, Member.class);
+        Member savedMember = memberRepository.save(newMember);
+
         //ma hoa mk
         //luu DB
-        return memberRepository.save(member);
+        return convertToResponse(savedMember);
     }
 
     //login*
@@ -53,6 +67,8 @@ public class MemberService implements UserDetailsService {
         // b1 : lấy userName(Email) và password
         // b2 : tìm trong DB có account nào giống với UserName không(loadUserByUsername)
         // b3 : AuthenticationManager => so sanh tài khoảng và password dưới db <==> với password người dunùng nhập(authenticationManager)
+//        Member member = new Member();
+//        boolean checkAccount = member.
           Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                   login.getEmail(),
                   login.getPassword()
@@ -66,6 +82,7 @@ public class MemberService implements UserDetailsService {
         }
            */
 
+
           //member => memberResponse
           //==> maping bằng ModelMapper
           MemberResponse memberResponse = modelMapper.map(member, MemberResponse.class);
@@ -76,18 +93,18 @@ public class MemberService implements UserDetailsService {
 
     }
 
-
+    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
     }
+    */
 
-    /*
-    // Get all active members
-    public List<Member> getAllMembers() {
+    // Lấy user chưa bị xóa mềm
+    public List<Member> getActiveMembers() {
         return memberRepository.findAllByDeletedFalse();
     }
-     */
+
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
@@ -95,32 +112,64 @@ public class MemberService implements UserDetailsService {
         return memberRepository.findMemberByEmail(email);
     }
 
-    public Member getCurrentMember() {
-        return (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+    public MemberResponse getCurrentMember() {
+        Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        return convertToResponse(member);
     }
+
+    // Get member by ID
+    public MemberResponse getMemberById(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+        return convertToResponse(member);
+    }
+
     //update
-    public Member updateMember(Long id, MemberRequest request) {
+    public MemberResponse updateMember(Long id, MemberRequest request) {
         return memberRepository.findById(id).map(existing -> {
-            existing.setName(request.getName());
-            existing.setEmail(request.getEmail());
-            existing.setPhone(request.getPhone());
-            existing.setAddress(request.getAddress());
-            existing.setYearOfBirth(request.getYearOfBirth());
-            existing.setSex(request.getSex());
-            existing.setStatus(request.getStatus());
+            // Check email uniqueness if changed
+            if (request.getEmail() != null && !request.getEmail().equals(existing.getEmail())) {
+                if (memberRepository.findMemberByEmail(request.getEmail()) != null) {
+                    throw new DuplicateResourceException("Email already in use");
+                }
+            }
+            // Check phone uniqueness if changed
+            if (request.getPhone() != null && !request.getPhone().equals(existing.getPhone())) {
+                if (memberRepository.findByPhone(request.getPhone()) != null) {
+                    throw new DuplicateResourceException("Phone already in use");
+                }
+            }
+            // Use ModelMapper to map non-null fields from request to existing
+            modelMapper.map(request, existing);
+
+            // Handle password separately (only if provided)
             if (request.getPassword() != null && !request.getPassword().isEmpty()) {
                 existing.setPassword(passwordEncoder.encode(request.getPassword()));
             }
-            return memberRepository.save(existing);
+            Member updated = memberRepository.save(existing);
+            return convertToResponse(updated);
         }).orElse(null);
     }
     //delete
-    public boolean deleteMember(Long id) {
-        return memberRepository.findById(id).map(member -> {
-            member.setDeleted(true);
-            memberRepository.save(member);
-            return true;
-        }).orElse(false);
+    public void deleteMember(Long id) {
+        Member member = memberRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
+        member.setDeleted(true);
+        memberRepository.save(member);
+    }
+
+    // Helper method: Convert Entity -> Response
+    private MemberResponse convertToResponse(Member member) {
+        MemberResponse response = new MemberResponse();
+        response.setMemberId(member.getMemberId());
+        response.setName(member.getName());
+        response.setEmail(member.getEmail());
+        response.setPhone(member.getPhone());
+        response.setAddress(member.getAddress());
+        response.setYearOfBirth(member.getYearOfBirth());
+        response.setSex(member.getSex());
+        response.setStatus(member.getStatus());
+        return response;
     }
 
 }

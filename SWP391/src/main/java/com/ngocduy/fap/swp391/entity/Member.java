@@ -3,16 +3,14 @@ package com.ngocduy.fap.swp391.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Past;
-import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -37,8 +35,7 @@ public class Member implements UserDetails {
     private String address;
 
     @Column(name = "yearOfBirth")
-    @Past(message = "Invalid date of birth!")
-    @JsonFormat(pattern = "dd/MM/yyyy")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate yearOfBirth;
 
     @Column(name = "phone", unique = true)
@@ -52,7 +49,7 @@ public class Member implements UserDetails {
     private String email;
 
     @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "sex")
     private String sex;
@@ -61,6 +58,9 @@ public class Member implements UserDetails {
     @NotEmpty(message = "password can not empty!")
     private String password;
 
+    @Column(name = "role")
+    private String role = "MEMBER";
+
     // Soft_Deleted
     @Column(name = "is_deleted")
     private boolean deleted = false;
@@ -68,7 +68,7 @@ public class Member implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(/*() -> "ROLE_" + this.role*/);
     }
 
     @Override
@@ -78,12 +78,25 @@ public class Member implements UserDetails {
 
 
 
-    @OneToMany(mappedBy = "memberId")
+    @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     @JsonIgnore
     List<Article> articles;
 
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_id")
-    private Admin adminId;
+    @OneToMany(mappedBy = "memberId")
+    @JsonIgnore
+    private List<Auction> auctions;
+
+    @OneToMany(mappedBy = "member")
+    @JsonIgnore
+    private List<BID> bids = new ArrayList<>();
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Order> orders;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Subscription> subscriptions;
+
 }
