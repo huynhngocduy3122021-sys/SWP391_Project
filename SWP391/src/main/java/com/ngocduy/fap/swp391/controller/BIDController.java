@@ -33,7 +33,7 @@ public class BIDController {
         // gửi real time
         String topic = "/topic/auction/" + bid.getAuctionId();
         simpMessagingTemplate.convertAndSend(topic, bidResponse);
-        System.out.println("📢 Sent to topic: /topic/auction/" + bid.getAuctionId());
+       // System.out.println("📢 Sent to topic: /topic/auction/" + bid.getAuctionId());
         return ResponseEntity.ok(bidResponse);
 
     }
