@@ -33,10 +33,8 @@ public class Filter extends OncePerRequestFilter {
     TokenService tokenService;
 
     private final List<String> PUBLIC_API = List.of(
-            "POST:/api/members",
+            "POST:/api/members/register",
             "POST:/api/members/login",
-            "GET:/api/members",
-            "POST:/api/admin",
             "POST:/api/payment/**",
             "GET:/api/payment/**",
             "PATCH:/api/payment/**",
