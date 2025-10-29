@@ -10,7 +10,7 @@ public class PaymentResponse {
     private Long payId;
     private String method;
     private String transactionCode;
-    private BigDecimal amount;
+    private float amount;
     private LocalDateTime paymentDate;
     private String status;
 }

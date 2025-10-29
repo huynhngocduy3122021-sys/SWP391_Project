@@ -40,11 +40,23 @@ public class PackagesService {
 
     // Create package
     public PackagesResponse createPackage(PackagesRequest request) {
+        // Validation
+        if (request.getPrice() <= 0) {
+            throw new IllegalArgumentException("Price must be greater than 0");
+        }
+        if (request.getNumberOfPost() <= 0) {
+            throw new IllegalArgumentException("Number of posts must be greater than 0");
+        }
+        if (request.getDurationDays() == null || request.getDurationDays() <= 0) {
+            throw new IllegalArgumentException("Duration must be greater than 0");
+        }
+
         Packages pkg = new Packages();
         pkg.setName(request.getName());
         pkg.setNumberOfPost(request.getNumberOfPost());
         pkg.setDescription(request.getDescription());
         pkg.setPrice(request.getPrice());
+        pkg.setDurationDays(request.getDurationDays());
         pkg.setActive(true);
 
         Packages savedPackage = packagesRepository.save(pkg);
@@ -56,10 +68,24 @@ public class PackagesService {
         Packages pkg = packagesRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Package not found with id: " + id));
 
+        // Validation
+        if (request.getPrice() <= 0) {
+            throw new IllegalArgumentException("Price must be greater than 0");
+        }
+        if (request.getNumberOfPost() <= 0) {
+            throw new IllegalArgumentException("Number of posts must be greater than 0");
+        }
+        if (request.getDurationDays() != null && request.getDurationDays() <= 0) {
+            throw new IllegalArgumentException("Duration must be greater than 0");
+        }
+
         pkg.setName(request.getName());
         pkg.setNumberOfPost(request.getNumberOfPost());
         pkg.setDescription(request.getDescription());
         pkg.setPrice(request.getPrice());
+        if (request.getDurationDays() != null) {
+            pkg.setDurationDays(request.getDurationDays());
+        }
 
         Packages updatedPackage = packagesRepository.save(pkg);
         return convertToResponse(updatedPackage);
@@ -81,6 +107,8 @@ public class PackagesService {
         response.setNumberOfPost(pkg.getNumberOfPost());
         response.setDescription(pkg.getDescription());
         response.setPrice(pkg.getPrice());
+        response.setDurationDays(pkg.getDurationDays());
+        response.setActive(pkg.isActive());
         return response;
     }
 }

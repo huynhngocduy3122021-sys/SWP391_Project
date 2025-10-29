@@ -30,7 +30,6 @@ import static com.ngocduy.fap.swp391.entity.Article.ArticleType;
 public class ArticleService {
     private final ArticleRepository articleRepository;
     private final MemberRepository memberRepository;
-    private final AdminRepository adminRepository;
     private final BatteryArticleRepository batteryArticleRepository;
     private final CarArticleRepository carArticleRepository;
     private final MotorArticleRepository motorArticleRepository;
@@ -40,7 +39,6 @@ public class ArticleService {
     @Autowired
     public ArticleService(ArticleRepository articleRepository,
                           MemberRepository memberRepository,
-                          AdminRepository adminRepository,
                           BatteryArticleRepository batteryArticleRepository,
                           CarArticleRepository carArticleRepository,
                           MotorArticleRepository motorArticleRepository,
@@ -48,7 +46,6 @@ public class ArticleService {
                           ModelMapper modelMapper) {
         this.articleRepository = articleRepository;
         this.memberRepository = memberRepository;
-        this.adminRepository = adminRepository;
         this.batteryArticleRepository = batteryArticleRepository;
         this.carArticleRepository = carArticleRepository;
         this.motorArticleRepository = motorArticleRepository;
@@ -76,12 +73,12 @@ public class ArticleService {
             response.setMemberName("N/A");
         }
 
-        if (article.getApprovedAdmin() != null) {
-            response.setApprovedAdminId(article.getApprovedAdmin().getAdminId());
-            response.setApprovedAdminName(article.getApprovedAdmin().getName());
+        if (article.getApprovedBy() != null) {
+            response.setApprovedById(article.getApprovedBy().getMemberId());
+            response.setApprovedByName(article.getApprovedBy().getName());
         } else {
-            response.setApprovedAdminId(0L);
-            response.setApprovedAdminName(null);
+            response.setApprovedById(0L);
+            response.setApprovedByName(null);
         }
         response.setDeleted(article.isDeleted());
         
@@ -113,7 +110,7 @@ public class ArticleService {
 
         // Relations
         article.setMember(member);
-        article.setApprovedAdmin(null); // Admin is set during approve/reject
+        article.setApprovedBy(null); // Admin is set during approve/reject
 
         // Set status from request or default to DRAFT
         if (request.getStatus() != null && !request.getStatus().isBlank()) {
@@ -169,12 +166,12 @@ public class ArticleService {
         }
 
         // Update ApprovedAdmin if provided
-        if (request.getApprovedAdminId() != null && request.getApprovedAdminId() != 0L) {
-            Admin approvedAdmin = adminRepository.findById(request.getApprovedAdminId())
-                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + request.getApprovedAdminId()));
-            existingArticle.setApprovedAdmin(approvedAdmin);
+        if (request.getApprovedById() != null && request.getApprovedById() != 0L) {
+            Member approvedBy = memberRepository.findById(request.getApprovedById())
+                    .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + request.getApprovedById()));
+            existingArticle.setApprovedBy(approvedBy);
         } else {
-            existingArticle.setApprovedAdmin(null);
+            existingArticle.setApprovedBy(null);
         }
 
         modelMapper.map(request, existingArticle); // Map common fields from the request
@@ -413,30 +410,38 @@ public class ArticleService {
     }
 
     @Transactional
-    public ArticleResponse approveArticle(Long articleId, Long adminId) {
+    public ArticleResponse approveArticle(Long articleId, Long memberId) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found with id: " + articleId));
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + adminId));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
+
+        if(!"ADMIN".equals(member.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to approve this article");
+        }
 
         article.setStatus(ArticleStatus.APPROVED);
-        article.setApprovedAdmin(admin);
+        article.setApprovedBy(member);
         article.setApprovalDate(LocalDateTime.now()); // This now works because approvalDate is in Article entity
         Article updatedArticle = articleRepository.save(article);
         return convertToArticleResponse(updatedArticle);
     }
 
     @Transactional
-    public ArticleResponse rejectArticle(Long articleId, Long adminId) {
+    public ArticleResponse rejectArticle(Long articleId, Long memberId) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found with id: " + articleId));
 
-        Admin admin = adminRepository.findById(adminId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + adminId));
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
+
+        if(!"ADMIN".equals(member.getRole())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to reject this article");
+        }
 
         article.setStatus(ArticleStatus.REJECTED);
-        article.setApprovedAdmin(admin); // Admin who rejected it
+        article.setApprovedBy(member); // member who rejected it
         article.setApprovalDate(LocalDateTime.now()); // Set approval date even on rejection, or add a rejectionDate field
         Article updatedArticle = articleRepository.save(article);
         return convertToArticleResponse(updatedArticle);

@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -22,8 +23,12 @@ public class Subscription {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime endDate;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status")
-    private String status = "ACTIVE";
+    private SubscriptionStatus status = SubscriptionStatus.ACTIVE;
+
+    @Column(name = "RemainingPosts")
+    private Integer remainingPosts; // Number of posts remaining for this subscription
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;

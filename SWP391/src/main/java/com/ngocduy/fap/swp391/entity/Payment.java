@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
 @Getter
@@ -24,8 +22,8 @@ public class Payment {
     @Column(name = "TransactionCode")
     private String transactionCode;
 
-    @Column(name = "Amount", precision = 10, scale = 2)
-    private BigDecimal amount;
+    @Column(name = "Amount")
+    private float amount;
 
     @Column(name = "PaymentDate")
     private LocalDateTime paymentDate;
@@ -36,8 +34,31 @@ public class Payment {
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;
 
-    // Relationship
-    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL)
-    private List<Order> orders;
+    // VNPAY fields
+    @Column(name = "VnpTxnRef", unique = true)
+    private String vnpTxnRef; // Unique transaction reference for each payment attempt
+
+    @Column(name = "VnpTransactionNo")
+    private String vnpTransactionNo; // VNPAY's transaction number
+
+    @Column(name = "VnpBankCode")
+    private String vnpBankCode;
+
+    @Column(name = "VnpCardType")
+    private String vnpCardType;
+
+    @Column(name = "VnpPayDate")
+    private String vnpPayDate;
+
+    @Column(name = "VnpResponseCode")
+    private String vnpResponseCode; // 00 = success, others = fail
+
+    @Column(name = "VnpSecureHash", length = 512)
+    private String vnpSecureHash;
+
+    // Relationship: Payment belongs to Order
+    @ManyToOne
+    @JoinColumn(name = "OrderID", nullable = false)
+    private Order order;
 }
 

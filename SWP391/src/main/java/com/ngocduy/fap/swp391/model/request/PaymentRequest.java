@@ -1,13 +1,14 @@
 package com.ngocduy.fap.swp391.model.request;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-
-import java.math.BigDecimal;
 
 @Data
 public class PaymentRequest {
-    private String method;
-    private String transactionCode;
-    private BigDecimal amount;
-    private String status;
+    @NotNull(message = "Order ID is required")
+    private Long orderId;
+    
+    private String method = "VNPAY"; // Default to VNPAY
+    
+    private String bankCode; // Optional: specific bank for VNPAY (e.g., NCB, VIETCOMBANK)
 }

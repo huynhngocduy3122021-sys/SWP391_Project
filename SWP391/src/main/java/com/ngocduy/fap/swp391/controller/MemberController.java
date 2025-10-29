@@ -20,13 +20,16 @@ import java.util.List;
 public class MemberController {
 
     // điều hướng (controller) => xử lý logic (service) => lưu DB (repository) (JPA)
-    @Autowired
-    MemberService memberService;
+    private final MemberService memberService;
 
+    @Autowired
+    public MemberController(MemberService memberService) {
+        this.memberService = memberService;
+    }
 
 
     @PostMapping("/register")
-    public ResponseEntity<MemberResponse> register(@Valid @RequestBody Member member) {
+    public ResponseEntity<MemberResponse> register(@Valid @RequestBody MemberRequest member) {
         //nhan yeu cau tu FE
         // => day qua authenticationservice
         MemberResponse newMember = memberService.register(member);

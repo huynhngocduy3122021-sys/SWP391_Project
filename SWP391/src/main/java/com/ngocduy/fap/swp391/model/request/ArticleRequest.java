@@ -48,7 +48,7 @@ public class ArticleRequest {
     @NotBlank(message = "Status cannot be blank")
     private String status;
 
-    private Long approvedAdminId;
+    private Long approvedById;
 
     private List<String> imageUrls; // List of image URLs, first one will be marked as main
 

@@ -1,13 +1,16 @@
 package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ngocduy.fap.swp391.enums.OrderStatus;
+import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Getter
@@ -19,18 +22,20 @@ public class Order implements Serializable {
     @Column(name = "OrderID")
     private Long orderId;
 
-    @Column(name = "TotalAmount", precision = 10, scale = 2)
-    private BigDecimal totalAmount;
+    @Column(name = "TotalAmount")
+    private float totalAmount;
 
     @Column(name = "Date")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "Status")
-    private String status = "PENDING";
+    private OrderStatus status = OrderStatus.PENDING;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "PaymentStatus")
-    private String paymentStatus = "UNPAID";
+    private PaymentStatus paymentStatus = PaymentStatus.PENDING;
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;
@@ -44,7 +49,7 @@ public class Order implements Serializable {
     @JoinColumn(name = "PackageID", nullable = false)
     private Packages pkg;
 
-    @ManyToOne
-    @JoinColumn(name = "PayID", nullable = false)
-    private Payment payment;
+    // Relationship: Order có nhiều Payment attempts
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    private List<Payment> payments;
 }

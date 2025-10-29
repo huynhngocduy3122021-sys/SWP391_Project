@@ -49,7 +49,7 @@ public class Member implements UserDetails {
     private String email;
 
     @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
-    private String status;
+    private String status = "ACTIVE";
 
     @Column(name = "sex")
     private String sex;
@@ -58,6 +58,9 @@ public class Member implements UserDetails {
     @NotEmpty(message = "password can not empty!")
     private String password;
 
+    @Column(name = "role")
+    private String role = "MEMBER";
+
     // Soft_Deleted
     @Column(name = "is_deleted")
     private boolean deleted = false;
@@ -65,7 +68,7 @@ public class Member implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of();
+        return List.of(/*() -> "ROLE_" + this.role*/);
     }
 
     @Override
@@ -79,10 +82,6 @@ public class Member implements UserDetails {
     @JsonIgnore
     List<Article> articles;
 
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "admin_id")
-    private Admin adminId;
 
     @OneToMany(mappedBy = "memberId")
     @JsonIgnore

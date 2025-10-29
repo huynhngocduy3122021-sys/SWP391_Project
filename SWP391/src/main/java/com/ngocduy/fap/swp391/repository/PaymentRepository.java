@@ -12,4 +12,5 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
     List<Payment> findByIsDeletedFalse();
     Optional<Payment> findByPayIdAndIsDeletedFalse(Long payId);
     List<Payment> findByStatusAndIsDeletedFalse(String status);
+    Optional<Payment> findByVnpTxnRef(String vnpTxnRef);
 }
