@@ -2,6 +2,7 @@
 
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.model.request.ForgotPasswordRequest;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.service.MemberService;
@@ -80,5 +81,22 @@ public class MemberController {
         memberService.deleteMember(id);
         return ResponseEntity.noContent().build();
     }
+
+    // đăng kí forget Password
+    //B1 : gửi email xác nhận
+    // link update password
+
+
+    @PostMapping("/resetPassword")
+    public void resetPassword(@RequestParam String email) {
+        memberService.resetPassword(email);
+    }
+
+    @PostMapping("/updatePassword")
+    public ResponseEntity updatePassword(@RequestBody ForgotPasswordRequest Email) {
+        MemberResponse member = memberService.updatePassword(Email);
+        return ResponseEntity.ok(member);
+    }
+
 }
 

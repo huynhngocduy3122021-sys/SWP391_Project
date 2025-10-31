@@ -2,8 +2,10 @@ package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
 import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
+import com.ngocduy.fap.swp391.model.request.ForgotPasswordRequest;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
+import com.ngocduy.fap.swp391.model.response.EmailDetail;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.repository.MemberRepository;
 import org.modelmapper.ModelMapper;
@@ -41,6 +43,8 @@ public class MemberService implements UserDetailsService {
      private TokenService tokenService;
     @Autowired
     private ResourceTransformer resourceTransformer;
+    @Autowired
+    private EmailService emailService;
 
     public MemberResponse register(MemberRequest member) {
         // Xử lý logic cho register
@@ -172,4 +176,25 @@ public class MemberService implements UserDetailsService {
         return response;
     }
 
+    // email gửi yêu cầu đổi password và lấy token
+    public void resetPassword(String email) {
+        Member member = memberRepository.findMemberByEmail(email);
+
+        String token = tokenService.generateToken(member);
+        String url = "http:localhost:5173/reset-password?token=" + token;
+
+        EmailDetail emailDetail = new  EmailDetail();
+        emailDetail.setSubject(" reset password");
+        emailDetail.setRecipient(member.getEmail());
+        emailDetail.setFullName(member.getName());
+        emailDetail.setUrl(url);
+        emailService.sendMailTemplate(emailDetail , "forgotPassword.html");
+    }
+// nhận token để đổi mật khẩu
+    public MemberResponse updatePassword(ForgotPasswordRequest forgotPasswordRequest ) {
+         Member member = (Member) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        member.setPassword(passwordEncoder.encode(forgotPasswordRequest.getPassword()));
+        memberRepository.save(member);
+        return convertToResponse(member);
+    }
 }

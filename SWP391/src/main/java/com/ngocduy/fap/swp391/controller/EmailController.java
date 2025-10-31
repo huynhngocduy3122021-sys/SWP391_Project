@@ -19,7 +19,7 @@ public class EmailController {
 
     @PostMapping
     public void sendMail(@RequestBody EmailDetail emailDetail) {
-        emailService.sendMailTemplate(emailDetail);
+        emailService.sendMailTemplate(emailDetail , "forgotPassword.html");
 
     }
 }

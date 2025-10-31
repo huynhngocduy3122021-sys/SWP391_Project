@@ -9,4 +9,7 @@ public class EmailDetail {
     String subject;
 
     String fullName;
+
+    String url;
+
 }

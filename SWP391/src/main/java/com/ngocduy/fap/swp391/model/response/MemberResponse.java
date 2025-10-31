@@ -18,6 +18,7 @@ public class MemberResponse {
     private String status;
     private String role;
     private String sex;
+    private String password;
     private String token;
 
 }

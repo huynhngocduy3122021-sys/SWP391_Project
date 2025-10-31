@@ -40,7 +40,8 @@ public class Filter extends OncePerRequestFilter {
             "POST:/api/members/register",
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
-            "GET:/swagger-resources/**"
+            "GET:/swagger-resources/**",
+            "POST:/api/members/resetPassword"
 
     );
 

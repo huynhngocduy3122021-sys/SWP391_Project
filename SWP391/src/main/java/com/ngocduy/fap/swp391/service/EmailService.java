@@ -20,12 +20,14 @@ public class EmailService {
     JavaMailSender mailSender;
 
 
-    public void sendMailTemplate(EmailDetail emailDetail){
+    public void sendMailTemplate(EmailDetail emailDetail , String teamplate){
         try {
             Context context = new Context();
             context.setVariable("name", emailDetail.getFullName());
+            context.setVariable("url", emailDetail.getUrl());
 
-            String text = templateEngine.process("order-confirm", context);
+
+            String text = templateEngine.process(teamplate, context);
 
             // creating a simple mail message
             MimeMessage mimeMessage = mailSender.createMimeMessage();
