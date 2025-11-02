@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.model.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ngocduy.fap.swp391.enums.Role;
 import lombok.Data;
 import java.time.LocalDate;
 
@@ -12,7 +13,7 @@ public class MemberRequest {
     private LocalDate yearOfBirth;
     private String phone;
     private String email;
-    private String role;
+    private Role role;
     private String sex;
     private String password;
 

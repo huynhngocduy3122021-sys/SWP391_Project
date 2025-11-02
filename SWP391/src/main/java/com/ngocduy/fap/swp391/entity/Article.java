@@ -1,6 +1,8 @@
 package com.ngocduy.fap.swp391.entity;
 
 
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
+import com.ngocduy.fap.swp391.enums.ArticleType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -40,7 +42,7 @@ public class Article {
     @Enumerated(EnumType.STRING)
     @Column(name = "article_type", length = 50, columnDefinition = "NVARCHAR(255)")
     @NotNull(message = "article type cannot be empty!")
-    private ArticleType articleType;
+    private ArticleType articleType = ArticleType.CAR_ARTICLE;
 
     @Column(name = "public_date", nullable = false)
     private LocalDate publicDate;
@@ -63,7 +65,7 @@ public class Article {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", length = 50, columnDefinition = "NVARCHAR(255)")
     @NotNull(message = "status cannot be empty!")
-    private ArticleStatus status;
+    private ArticleStatus status = ArticleStatus.PENDING_APPROVAL;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "approved_member_id")
@@ -75,19 +77,7 @@ public class Article {
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
 
-    public enum ArticleType {
-        CAR_ARTICLE,
-        MOTOR_ARTICLE,
-        BATTERY_ARTICLE
-    }
 
-    public enum ArticleStatus {
-        DRAFT,
-        PENDING_APPROVAL,
-        APPROVED,
-        REJECTED,
-        ARCHIVED
-    }
 
     @OneToMany(mappedBy = "article", cascade =  CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Image> images;

@@ -1,8 +1,8 @@
 package com.ngocduy.fap.swp391.controller;
 
 
-import com.ngocduy.fap.swp391.entity.Article.ArticleStatus;
-import com.ngocduy.fap.swp391.model.request.ArticleRequest;
+
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
 import com.ngocduy.fap.swp391.model.request.BatteryArticleRequest;
 import com.ngocduy.fap.swp391.model.request.CarArticleRequest;
 import com.ngocduy.fap.swp391.model.request.MotorArticleRequest;
@@ -70,14 +70,13 @@ public class ArticleController {
         return ResponseEntity.ok(updatedArticle);
     }
 
-    // --- Get by ID (Returns a generic ArticleResponse, then client can check articleType) ---
     @GetMapping("/{id}")
     public ResponseEntity<ArticleResponse> getArticleById(@PathVariable Long id) {
         ArticleResponse article = articleService.getArticleById(id);
         return ResponseEntity.ok(article);
     }
 
-    // All other common endpoints remain as is, returning List<ArticleResponse> or single ArticleResponse
+
     @GetMapping
     public ResponseEntity<List<ArticleResponse>> getAllArticles() {
         List<ArticleResponse> articles = articleService.getAllArticles();
