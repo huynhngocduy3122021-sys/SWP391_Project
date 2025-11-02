@@ -59,7 +59,8 @@ public class Member implements UserDetails {
     @NotEmpty(message = "password can not empty!")
     private String password;
 
-    @Column(name = "role")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "role")  
     private Role role = Role.MEMBER;
 
     // Soft_Deleted
