@@ -1,6 +1,8 @@
 package com.ngocduy.fap.swp391.model.response;
 
 
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
+import com.ngocduy.fap.swp391.enums.ArticleType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -20,14 +22,14 @@ public class ArticleResponse {
     private String title;
     private String content;
     private String location;
-    private String articleType;
+    private ArticleType articleType;
     private LocalDate publicDate;
     private LocalDateTime createAt;
     private LocalDateTime updateAt;
     private long memberId;
     private String memberName; // To display member name directly in response
     private BigDecimal price;
-    private String status;
+    private ArticleStatus status;
     private long approvedById;
     private String approvedByName;
     private boolean deleted;

@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ngocduy.fap.swp391.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -59,7 +60,7 @@ public class Member implements UserDetails {
     private String password;
 
     @Column(name = "role")
-    private String role = "MEMBER";
+    private Role role = Role.MEMBER;
 
     // Soft_Deleted
     @Column(name = "is_deleted")

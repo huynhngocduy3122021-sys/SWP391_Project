@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.model.response;
 
 
+import com.ngocduy.fap.swp391.enums.Role;
 import lombok.Data;
 
 
@@ -16,7 +17,7 @@ public class MemberResponse {
     private String phone;
     private String email;
     private String status;
-    private String role;
+    private Role role;
     private String sex;
     private String token;
 

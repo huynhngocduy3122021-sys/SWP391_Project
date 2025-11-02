@@ -1,10 +1,11 @@
 package com.ngocduy.fap.swp391.repository;
 
 import com.ngocduy.fap.swp391.entity.Article;
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import static com.ngocduy.fap.swp391.entity.Article.ArticleStatus;
+
 
 import java.util.List;
 

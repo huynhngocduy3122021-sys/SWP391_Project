@@ -2,6 +2,10 @@ package com.ngocduy.fap.swp391.model.request;
 
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
+import com.ngocduy.fap.swp391.enums.ArticleType;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -31,8 +35,8 @@ public class ArticleRequest {
     @NotBlank(message = "Location cannot be blank")
     private String location;
 
-    @NotBlank(message = "Article type cannot be blank")
-    private String articleType; //CAR_ARTICLE, MOTOR_ARTICLE, BATTERY_ARTICLE
+    @Enumerated(EnumType.STRING)
+    private ArticleType articleType;
 
     @NotNull(message = "Public date cannot be null")
     @JsonFormat(pattern = "dd/MM/yyyy")
@@ -45,8 +49,8 @@ public class ArticleRequest {
     @DecimalMin(value = "0.00", inclusive = false , message = "Price must be zero or positive")
     private BigDecimal price;
 
-    @NotBlank(message = "Status cannot be blank")
-    private String status;
+    @Enumerated(EnumType.STRING)
+    private ArticleStatus status;
 
     private Long approvedById;
 

@@ -2,6 +2,8 @@ package com.ngocduy.fap.swp391.service;
 
 
 import com.ngocduy.fap.swp391.entity.*;
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
+import com.ngocduy.fap.swp391.enums.ArticleType;
 import com.ngocduy.fap.swp391.model.request.ArticleRequest;
 import com.ngocduy.fap.swp391.model.request.BatteryArticleRequest;
 import com.ngocduy.fap.swp391.model.request.CarArticleRequest;
@@ -23,8 +25,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static com.ngocduy.fap.swp391.entity.Article.ArticleStatus;
-import static com.ngocduy.fap.swp391.entity.Article.ArticleType;
 
 @Service
 public class ArticleService {
@@ -59,10 +59,10 @@ public class ArticleService {
         ArticleResponse response = modelMapper.map(article, ArticleResponse.class);
 
         if (article.getArticleType() != null) {
-            response.setArticleType(article.getArticleType().name());
+            response.setArticleType(article.getArticleType());
         }
         if (article.getStatus() != null) {
-            response.setStatus(article.getStatus().name());
+            response.setStatus(article.getStatus());
         }
 
         if (article.getMember() != null) {
@@ -99,6 +99,72 @@ public class ArticleService {
         return response;
     }
 
+    private CarArticleResponse convertToCarArticleResponse(Article article) {
+        // Fetch the specific CarArticle data
+        CarArticle carArticle = carArticleRepository.findById(article.getArticleId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "CarArticle not found for Article id: " + article.getArticleId()));
+
+        // Start with base ArticleResponse (includes all common fields + images)
+        CarArticleResponse response = modelMapper.map(convertToArticleResponse(article),
+                CarArticleResponse.class);
+
+        // Add specific CarArticle fields
+        modelMapper.map(carArticle, response);
+
+        return response;
+    }
+
+    private MotorArticleResponse convertToMotorArticleResponse(Article article) {
+        // Fetch the specific MotorArticle data
+        MotorArticle motorArticle = motorArticleRepository.findById(article.getArticleId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "MotorArticle not found for Article id: " + article.getArticleId()));
+
+        // Start with base ArticleResponse (includes all common fields + images)
+        MotorArticleResponse response = modelMapper.map(convertToArticleResponse(article),
+                MotorArticleResponse.class);
+
+        // Add specific MotorArticle fields
+        modelMapper.map(motorArticle, response);
+
+        return response;
+    }
+
+    private BatteryArticleResponse convertToBatteryArticleResponse(Article article) {
+        // Fetch the specific BatteryArticle data
+        BatteryArticle batteryArticle = batteryArticleRepository.findById(article.getArticleId())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND,
+                        "BatteryArticle not found for Article id: " + article.getArticleId()));
+
+        // Start with base ArticleResponse (includes all common fields + images)
+        BatteryArticleResponse response = modelMapper.map(convertToArticleResponse(article),
+                BatteryArticleResponse.class);
+
+        // Add specific BatteryArticle fields
+        modelMapper.map(batteryArticle, response);
+
+        return response;
+    }
+
+    private ArticleResponse convertToSpecificArticleResponse(Article article) {
+        ArticleType type = article.getArticleType();
+
+        //safety first
+        if(type == null) {
+            return convertToArticleResponse(article);
+        }
+
+        return switch (type) {
+            case CAR_ARTICLE -> convertToCarArticleResponse(article);
+            case BATTERY_ARTICLE -> convertToBatteryArticleResponse(article);
+            case MOTOR_ARTICLE -> convertToMotorArticleResponse(article);
+            default -> convertToArticleResponse(article);
+        };
+
+    }
+
+
     // Generic helper to save the base Article entity
     private Article saveArticle(ArticleRequest request, ArticleType type) {
         Member member = memberRepository.findById(request.getMemberId())
@@ -112,15 +178,11 @@ public class ArticleService {
         article.setMember(member);
         article.setApprovedBy(null); // Admin is set during approve/reject
 
-        // Set status from request or default to DRAFT
-        if (request.getStatus() != null && !request.getStatus().isBlank()) {
-            try {
-                article.setStatus(ArticleStatus.valueOf(request.getStatus()));
-            } catch (IllegalArgumentException e) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Article Status: " + request.getStatus());
-            }
+        // Set status from request or default to PENDING_APPROVAL
+        if(request.getStatus() != null) {
+            article.setStatus(request.getStatus());
         } else {
-            article.setStatus(ArticleStatus.DRAFT);
+            article.setStatus(ArticleStatus.PENDING_APPROVAL);
         }
 
         Article savedArticle = articleRepository.save(article);
@@ -177,9 +239,9 @@ public class ArticleService {
         modelMapper.map(request, existingArticle); // Map common fields from the request
 
         // Set status from request
-        if (request.getStatus() != null && !request.getStatus().isBlank()) {
+        if (request.getStatus() != null) {
             try {
-                existingArticle.setStatus(ArticleStatus.valueOf(request.getStatus()));
+                existingArticle.setStatus(request.getStatus());
             } catch (IllegalArgumentException e) {
                 throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid Article Status: " + request.getStatus());
             }
@@ -194,7 +256,7 @@ public class ArticleService {
     public List<ArticleResponse> getAllArticles() {
         return articleRepository.findAll().stream()
                 .filter(article -> !article.isDeleted()) // Only retrieve non-deleted articles
-                .map(this::convertToArticleResponse)
+                .map(this::convertToSpecificArticleResponse)
                 .collect(Collectors.toList());
     }
 
@@ -206,10 +268,7 @@ public class ArticleService {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Article with id: " + id + " is deleted.");
         }
 
-        // You might want to return a specific response DTO here based on article.getArticleType()
-        // For simplicity, returning the base ArticleResponse which contains common fields.
-        // A client would then make another call or handle the specific data if needed.
-        return convertToArticleResponse(article);
+        return convertToSpecificArticleResponse(article);
     }
 
     // --- Specific Article Creation Methods ---
