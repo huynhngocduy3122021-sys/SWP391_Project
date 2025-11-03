@@ -148,20 +148,35 @@ public class PaymentController {
                 order.setStatus(OrderStatus.CONFIRMED);
                 orderRepository.save(order);
                 
-                // 4. Tạo Subscription
+                // 4. Tạo hoặc gia hạn Subscription
                 SubscriptionId subscriptionId = new SubscriptionId(
                     order.getMember().getMemberId(),
                     order.getPkg().getPackageId()
                 );
                 
-                Subscription subscription = new Subscription();
-                subscription.setId(subscriptionId);
-                subscription.setMember(order.getMember());
-                subscription.setPkg(order.getPkg());
-                subscription.setStartDate(java.time.LocalDateTime.now());
-                subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
-                subscription.setStatus(SubscriptionStatus.ACTIVE);
-                subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                    .orElse(null);
+                
+                if (subscription == null) {
+                    // Tạo mới nếu chưa có
+                    subscription = new Subscription();
+                    subscription.setId(subscriptionId);
+                    subscription.setMember(order.getMember());
+                    subscription.setPkg(order.getPkg());
+                    subscription.setStartDate(java.time.LocalDateTime.now());
+                    subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                } else {
+                    // Gia hạn nếu đã có
+                    java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now()) 
+                        ? subscription.getEndDate() 
+                        : java.time.LocalDateTime.now();
+                    subscription.setStartDate(newStartDate);
+                    subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                }
                 subscriptionRepository.save(subscription);
                 
                 return ResponseEntity.ok(
