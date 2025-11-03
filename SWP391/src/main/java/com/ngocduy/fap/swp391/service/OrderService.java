@@ -205,14 +205,6 @@ public class OrderService {
             response.setPackageName(order.getPkg().getName());
         }
         
-        // Lấy payment thành công cuối cùng nếu có
-        if (order.getPayments() != null && !order.getPayments().isEmpty()) {
-            order.getPayments().stream()
-                .filter(p -> "SUCCESS".equals(p.getStatus()) || "COMPLETED".equals(p.getStatus()))
-                .findFirst()
-                .ifPresent(p -> response.setPayId(p.getPayId()));
-        }
-        
         return response;
     }
 }

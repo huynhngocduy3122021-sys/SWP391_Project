@@ -16,11 +16,11 @@ public class Subscription {
     private SubscriptionId id;
 
     @Column(name = "StartDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy'T'HH:mm:ss")
     private LocalDateTime startDate;
 
     @Column(name = "EndDate")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy'T'HH:mm:ss")
     private LocalDateTime endDate;
 
     @Enumerated(EnumType.STRING)

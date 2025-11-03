@@ -20,5 +20,4 @@ public class OrderResponse {
     private String memberName;
     private Long packageId;
     private String packageName;
-    private Long payId;
 }
