@@ -2,13 +2,17 @@ package com.ngocduy.fap.swp391.controller;
 
 import com.ngocduy.fap.swp391.entity.Order;
 import com.ngocduy.fap.swp391.entity.Payment;
+import com.ngocduy.fap.swp391.entity.Subscription;
+import com.ngocduy.fap.swp391.entity.SubscriptionId;
 import com.ngocduy.fap.swp391.enums.OrderStatus;
 import com.ngocduy.fap.swp391.enums.PaymentStatus;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
+import com.ngocduy.fap.swp391.repository.SubscriptionRepository;
 import com.ngocduy.fap.swp391.service.PaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +37,9 @@ public class PaymentController {
     
     @Autowired
     private OrderRepository orderRepository;
+    
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     // Get all payments
     @GetMapping
@@ -141,8 +148,36 @@ public class PaymentController {
                 order.setStatus(OrderStatus.CONFIRMED);
                 orderRepository.save(order);
                 
-                // 4. TODO: Tạo Subscription nếu cần
-                // subscriptionService.createSubscriptionFromOrder(orderId);
+                // 4. Tạo hoặc gia hạn Subscription
+                SubscriptionId subscriptionId = new SubscriptionId(
+                    order.getMember().getMemberId(),
+                    order.getPkg().getPackageId()
+                );
+                
+                Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                    .orElse(null);
+                
+                if (subscription == null) {
+                    // Tạo mới nếu chưa có
+                    subscription = new Subscription();
+                    subscription.setId(subscriptionId);
+                    subscription.setMember(order.getMember());
+                    subscription.setPkg(order.getPkg());
+                    subscription.setStartDate(java.time.LocalDateTime.now());
+                    subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                } else {
+                    // Gia hạn nếu đã có
+                    java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now()) 
+                        ? subscription.getEndDate() 
+                        : java.time.LocalDateTime.now();
+                    subscription.setStartDate(newStartDate);
+                    subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                }
+                subscriptionRepository.save(subscription);
                 
                 return ResponseEntity.ok(
                     "Payment successful!\n" +
