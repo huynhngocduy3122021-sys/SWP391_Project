@@ -476,9 +476,6 @@ public class ArticleService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
 
-        if(!"ADMIN".equals(member.getRole())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to approve this article");
-        }
 
         article.setStatus(ArticleStatus.APPROVED);
         article.setApprovedBy(member);
@@ -495,10 +492,6 @@ public class ArticleService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
 
-        if(!"ADMIN".equals(member.getRole())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not allowed to reject this article");
-        }
-
         article.setStatus(ArticleStatus.REJECTED);
         article.setApprovedBy(member); // member who rejected it
         article.setApprovalDate(LocalDateTime.now()); // Set approval date even on rejection, or add a rejectionDate field
@@ -511,6 +504,7 @@ public class ArticleService {
         // Changed to findByMember_MemberIdAndIsDeletedFalse for better query generation and consistency
         // Assumes ArticleRepository has this method: List<Article> findByMember_MemberIdAndIsDeletedFalse(Long memberId);
         return articleRepository.findByMember_MemberId(memberId).stream()
+                .filter(article -> !article.isDeleted())
                 .map(this::convertToArticleResponse)
                 .collect(Collectors.toList());
     }
@@ -520,11 +514,10 @@ public class ArticleService {
         // Changed to findByStatusAndIsDeletedFalse for consistency with soft delete
         // Assumes ArticleRepository has this method: List<Article> findByStatusAndIsDeletedFalse(ArticleStatus status);
         return articleRepository.findByStatus(status).stream()
+                .filter(article -> !article.isDeleted())
                 .map(this::convertToArticleResponse)
                 .collect(Collectors.toList());
     }
-
-
 
     @Transactional
     public boolean deleteArticle(Long id) {

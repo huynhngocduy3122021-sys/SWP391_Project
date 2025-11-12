@@ -71,11 +71,6 @@ public class Filter extends OncePerRequestFilter {
             filterChain.doFilter(request, response);
             return;
         }
-        //Bỏ qua WebSocket handshake
-        if (uri.startsWith("/ws")) {
-            filterChain.doFilter(request, response);
-            return;
-        }
 
         if(isPublicAPI(uri , method)){
             //api public

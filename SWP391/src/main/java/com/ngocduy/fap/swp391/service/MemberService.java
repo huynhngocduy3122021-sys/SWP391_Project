@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.resource.ResourceTransformer;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MemberService implements UserDetailsService {
@@ -75,12 +77,12 @@ public class MemberService implements UserDetailsService {
           ));
 
           Member member = (Member) authentication.getPrincipal();
-          /*
+
           // Nếu user đã bị xóa mềm thì không cho login
         if (member.isDeleted()) {
             throw new AuthenticationException("Account has been deleted or disabled");
         }
-           */
+
 
 
           //member => memberResponse
@@ -101,8 +103,11 @@ public class MemberService implements UserDetailsService {
     */
 
     // Lấy user chưa bị xóa mềm
-    public List<Member> getActiveMembers() {
-        return memberRepository.findAllByDeletedFalse();
+    public List<MemberResponse> getActiveMembers() {
+        return memberRepository.findAllByDeletedFalse()
+                .stream()
+                .map(this::convertToResponse)
+                .collect(Collectors.toList());
     }
 
 

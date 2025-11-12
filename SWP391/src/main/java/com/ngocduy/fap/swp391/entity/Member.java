@@ -8,6 +8,7 @@ import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
@@ -70,7 +71,7 @@ public class Member implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(/*() -> "ROLE_" + this.role*/);
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override
@@ -83,15 +84,6 @@ public class Member implements UserDetails {
     @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     @JsonIgnore
     List<Article> articles;
-
-
-    @OneToMany(mappedBy = "memberId")
-    @JsonIgnore
-    private List<Auction> auctions;
-
-    @OneToMany(mappedBy = "member")
-    @JsonIgnore
-    private List<BID> bids = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @JsonIgnore
