@@ -526,6 +526,7 @@ public class ArticleService {
 
         // Soft delete the base article
         article.setDeleted(true);
+        article.setStatus(ArticleStatus.DELETED);
         articleRepository.save(article);
         return true;
 

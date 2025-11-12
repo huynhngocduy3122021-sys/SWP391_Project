@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ngocduy.fap.swp391.enums.MemberStatus;
 import com.ngocduy.fap.swp391.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
@@ -50,8 +51,9 @@ public class Member implements UserDetails {
     @NotEmpty(message = "Email cannot be empty!")
     private String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
-    private String status = "ACTIVE";
+    private MemberStatus status = MemberStatus.ACTIVE;
 
     @Column(name = "sex")
     private String sex;
