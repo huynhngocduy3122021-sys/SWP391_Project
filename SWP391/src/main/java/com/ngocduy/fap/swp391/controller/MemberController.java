@@ -47,8 +47,8 @@ public class MemberController {
 
 
 
-    //test get all member
     @GetMapping("/allmember")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
@@ -63,6 +63,7 @@ public class MemberController {
 
     // GET member by ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MemberResponse> getMemberById(@PathVariable Long id) {
         MemberResponse member = memberService.getMemberById(id);
         return ResponseEntity.ok(member);
@@ -77,6 +78,7 @@ public class MemberController {
 
     //  DELETE
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteMember(@PathVariable Long id) {
         memberService.deleteMember(id);
         return ResponseEntity.noContent().build();

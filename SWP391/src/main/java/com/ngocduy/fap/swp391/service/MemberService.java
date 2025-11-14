@@ -96,6 +96,7 @@ public class MemberService implements UserDetailsService {
 
     }
 
+
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
@@ -104,7 +105,7 @@ public class MemberService implements UserDetailsService {
 
     // Lấy user có trạng thái ACTIVE
     public List<MemberResponse> getActiveMembers() {
-        return memberRepository.findAllByStatus("ACTIVE")
+        return memberRepository.findAllByStatus(MemberStatus.ACTIVE)
                 .stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());

@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.repository;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.enums.MemberStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -20,6 +21,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Member findByEmail(String email);
 
     // Lấy toàn bộ member theo trạng thái
-    List<Member> findAllByStatus(String status);
+    List<Member> findAllByStatus(MemberStatus status);
 
 }
