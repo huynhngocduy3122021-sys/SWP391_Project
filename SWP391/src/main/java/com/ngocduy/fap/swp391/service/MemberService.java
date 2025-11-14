@@ -96,12 +96,11 @@ public class MemberService implements UserDetailsService {
 
     }
 
-    /*
     public List<Member> getAllMembers() {
         List<Member> members = memberRepository.findAll();
         return members;
     }
-    */
+
 
     // Lấy user có trạng thái ACTIVE
     public List<MemberResponse> getActiveMembers() {

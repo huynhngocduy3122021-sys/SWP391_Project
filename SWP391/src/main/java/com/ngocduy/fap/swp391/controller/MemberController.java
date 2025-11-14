@@ -46,14 +46,14 @@ public class MemberController {
     }
 
 
-    /*
+
     //test get all member
     @GetMapping("/allmember")
     public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
-     */
+
 
     //test member hien dang login
     @GetMapping("/current")

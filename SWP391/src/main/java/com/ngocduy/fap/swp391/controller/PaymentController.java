@@ -9,16 +9,20 @@ import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
+import com.ngocduy.fap.swp391.model.request.VnpayUrlRequest;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import com.ngocduy.fap.swp391.repository.SubscriptionRepository;
 import com.ngocduy.fap.swp391.service.PaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.view.RedirectView;
 
 import java.util.HashMap;
 import java.util.List;
@@ -40,6 +44,9 @@ public class PaymentController {
     
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+    
+    @Value("${payment.vnpay.frontend-url:http://localhost:5173}")
+    private String frontendUrl;
 
     // Get all payments
     @GetMapping
@@ -111,9 +118,16 @@ public class PaymentController {
 
     // Create VNPAY payment URL for existing order
     @PostMapping("/vnpay/create-url")
-    public ResponseEntity<String> createPaymentURL(@RequestParam Long orderId) throws Exception {
-        String paymentURL = paymentService.createPaymentURL(orderId);
-        return ResponseEntity.ok(paymentURL);
+    public ResponseEntity<?> createPaymentURL(@Valid @RequestBody VnpayUrlRequest request) {
+        try {
+            String paymentURL = paymentService.createPaymentURL(request.getOrderId());
+            return ResponseEntity.ok(paymentURL);
+        } catch (NotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error creating payment URL: " + e.getMessage());
+        }
     }
 
     // Handle VNPAY return callback - Success
@@ -201,9 +215,130 @@ public class PaymentController {
         }
     }
     
-    // Handle VNPAY return callback - General (for backward compatibility)
+    // Handle VNPAY return callback - Main endpoint that redirects to frontend
+    @GetMapping("/vnpay/return")
+    public RedirectView handleVnpayReturn(@RequestParam Map<String, String> params) {
+        try {
+            String vnpResponseCode = params.get("vnp_ResponseCode");
+            String vnpTxnRef = params.get("vnp_TxnRef");
+            String vnpAmount = params.get("vnp_Amount");
+            String vnpTransactionNo = params.get("vnp_TransactionNo");
+            String vnpOrderInfo = params.get("vnp_OrderInfo");
+            
+            // Extract orderId from vnp_OrderInfo (format: "Thanh toan cho ma GD: {orderId}")
+            Long orderId = null;
+            if (vnpOrderInfo != null && vnpOrderInfo.contains("ma GD: ")) {
+                try {
+                    String orderIdStr = vnpOrderInfo.substring(vnpOrderInfo.indexOf("ma GD: ") + 7).trim();
+                    orderId = Long.parseLong(orderIdStr);
+                } catch (Exception e) {
+                    // If can't parse, try to find from payment by txnRef
+                }
+            }
+            
+            // If orderId not found from OrderInfo, try to find from payment
+            if (orderId == null) {
+                try {
+                    Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef).orElse(null);
+                    if (payment != null && payment.getOrder() != null) {
+                        orderId = payment.getOrder().getOrderId();
+                    }
+                } catch (Exception e) {
+                    // Ignore
+                }
+            }
+            
+            if ("00".equals(vnpResponseCode)) {
+                // Payment successful
+                if (orderId != null) {
+                    try {
+                        // Process payment (same logic as handleVnpaySuccess)
+                        Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
+                                .orElseThrow(() -> new NotFoundException("Payment not found with txnRef: " + vnpTxnRef));
+                        
+                        payment.setStatus("COMPLETED");
+                        payment.setVnpTransactionNo(vnpTransactionNo);
+                        payment.setVnpBankCode(params.get("vnp_BankCode"));
+                        payment.setVnpPayDate(params.get("vnp_PayDate"));
+                        payment.setVnpResponseCode(vnpResponseCode);
+                        paymentRepository.save(payment);
+                        
+                        Order order = payment.getOrder();
+                        order.setPaymentStatus(PaymentStatus.PAID);
+                        order.setStatus(OrderStatus.CONFIRMED);
+                        orderRepository.save(order);
+                        
+                        // Create or extend Subscription
+                        SubscriptionId subscriptionId = new SubscriptionId(
+                            order.getMember().getMemberId(),
+                            order.getPkg().getPackageId()
+                        );
+                        
+                        Subscription subscription = subscriptionRepository.findById(subscriptionId)
+                            .orElse(null);
+                        
+                        if (subscription == null) {
+                            subscription = new Subscription();
+                            subscription.setId(subscriptionId);
+                            subscription.setMember(order.getMember());
+                            subscription.setPkg(order.getPkg());
+                            subscription.setStartDate(java.time.LocalDateTime.now());
+                            subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                            subscription.setStatus(SubscriptionStatus.ACTIVE);
+                            subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                        } else {
+                            java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now()) 
+                                ? subscription.getEndDate() 
+                                : java.time.LocalDateTime.now();
+                            subscription.setStartDate(newStartDate);
+                            subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                            subscription.setStatus(SubscriptionStatus.ACTIVE);
+                            subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                        }
+                        subscriptionRepository.save(subscription);
+                    } catch (Exception e) {
+                        // Log error but still redirect
+                        e.printStackTrace();
+                    }
+                }
+                
+                // Redirect to frontend success page
+                String redirectUrl = frontendUrl + "/payment/result?status=success&orderId=" + 
+                    (orderId != null ? orderId : "") + 
+                    "&transactionNo=" + (vnpTransactionNo != null ? vnpTransactionNo : "") +
+                    "&amount=" + (vnpAmount != null ? vnpAmount : "");
+                return new RedirectView(redirectUrl);
+            } else {
+                // Payment failed
+                if (orderId != null) {
+                    try {
+                        Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
+                                .orElseThrow(() -> new NotFoundException("Payment not found"));
+                        payment.setStatus("FAILED");
+                        payment.setVnpResponseCode(vnpResponseCode);
+                        paymentRepository.save(payment);
+                    } catch (Exception e) {
+                        // Ignore
+                    }
+                }
+                
+                // Redirect to frontend failure page
+                String redirectUrl = frontendUrl + "/payment/result?status=failed&orderId=" + 
+                    (orderId != null ? orderId : "") + 
+                    "&errorCode=" + vnpResponseCode;
+                return new RedirectView(redirectUrl);
+            }
+        } catch (Exception e) {
+            // On error, redirect to frontend with error
+            String redirectUrl = frontendUrl + "/payment/result?status=error&message=" + 
+                java.net.URLEncoder.encode(e.getMessage(), java.nio.charset.StandardCharsets.UTF_8);
+            return new RedirectView(redirectUrl);
+        }
+    }
+    
+    // Handle VNPAY return callback - General (for backward compatibility - returns JSON)
     @GetMapping("/vnpay/return/vnp")
-    public ResponseEntity<Map<String, Object>> handleVnpayReturn(@RequestParam Map<String, String> params) {
+    public ResponseEntity<Map<String, Object>> handleVnpayReturnJson(@RequestParam Map<String, String> params) {
         try {
             String vnpResponseCode = params.get("vnp_ResponseCode");
             String vnpTxnRef = params.get("vnp_TxnRef");

@@ -19,13 +19,14 @@ public class Packages implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long packageId;
 
-    @Column(name = "Name", nullable = false)
+
+    @Column(columnDefinition ="NVARCHAR(MAX)" ,name = "Name", nullable = false)
     private String name;
 
     @Column(name = "NumberOfPost")
     private Integer numberOfPost;
 
-    @Column(name = "Description")
+    @Column(columnDefinition ="NVARCHAR(MAX)",name = "Description")
     private String description;
 
     @Column(name = "Price")

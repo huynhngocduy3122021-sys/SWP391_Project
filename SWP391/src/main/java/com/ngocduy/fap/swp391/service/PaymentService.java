@@ -8,6 +8,7 @@ import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -17,6 +18,8 @@ import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -32,6 +35,9 @@ public class PaymentService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Value("${payment.vnpay.return-url:}")
+    private String configuredReturnUrl;
     // Get all payments (excluding deleted)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findByIsDeletedFalse().stream()
@@ -151,14 +157,14 @@ public class PaymentService {
         paymentRepository.save(payment);
         
         // 3. Build URL VNPAY
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        LocalDateTime createDate = LocalDateTime.now();
-        String formattedCreateDate = createDate.format(formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyyHHmmss");
+        ZonedDateTime createDateVN = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
+        String formattedCreateDate = createDateVN.format(formatter);
         String tmnCode = "2G68WVJ3";
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        String returnUrl = "http://localhost:8080/api/payment/vnpay/return/success/" + orderId;
-
+        // Always use backend callback endpoint, which will redirect to frontend
+        String returnUrl = "http://14.225.206.98:8080/api/payment/vnpay/return";
         String currCode = "VND";
         Map<String, String> vnpParams = new TreeMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
