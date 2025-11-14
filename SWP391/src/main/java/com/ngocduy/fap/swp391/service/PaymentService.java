@@ -143,10 +143,10 @@ public class PaymentService {
         // 1. Lấy Order đã tồn tại
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-        
+
         // 2. Tạo Payment record trong DB
         String txnRef = orderId + "-" + System.currentTimeMillis();
-        
+
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setMethod("VNPAY");
@@ -155,16 +155,16 @@ public class PaymentService {
         payment.setPaymentDate(LocalDateTime.now());
         payment.setVnpTxnRef(txnRef);
         paymentRepository.save(payment);
-        
+
         // 3. Build URL VNPAY
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyyHHmmss");
-        ZonedDateTime createDateVN = ZonedDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
-        String formattedCreateDate = createDateVN.format(formatter);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        LocalDateTime createDate = LocalDateTime.now();
+        String formattedCreateDate = createDate.format(formatter);
         String tmnCode = "2G68WVJ3";
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        // Always use backend callback endpoint, which will redirect to frontend
-        String returnUrl = "http://14.225.206.98:8080/api/payment/vnpay/return";
+        String returnUrl = "http://localhost:8080/api/payment/vnpay/return/success/" + orderId;
+
         String currCode = "VND";
         Map<String, String> vnpParams = new TreeMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
