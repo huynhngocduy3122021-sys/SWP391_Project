@@ -17,14 +17,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -38,6 +36,7 @@ public class PaymentService {
 
     @Value("${payment.vnpay.return-url:}")
     private String configuredReturnUrl;
+
     // Get all payments (excluding deleted)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findByIsDeletedFalse().stream()
@@ -156,10 +155,14 @@ public class PaymentService {
         payment.setVnpTxnRef(txnRef);
         paymentRepository.save(payment);
 
-        // 3. Build URL VNPAY
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        LocalDateTime createDate = LocalDateTime.now();
-        String formattedCreateDate = createDate.format(formatter);
+        // 3. Build URL VNPAY (Vietnam time)
+        TimeZone vnTimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+        Calendar cld = Calendar.getInstance(vnTimeZone);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(vnTimeZone);
+        String formattedCreateDate = formatter.format(cld.getTime());
+        cld.add(Calendar.MINUTE, 15);
+        String formattedExpireDate = formatter.format(cld.getTime());
         String tmnCode = "2G68WVJ3";
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
@@ -178,6 +181,7 @@ public class PaymentService {
         vnpParams.put("vnp_Amount", String.valueOf((long)(order.getTotalAmount() * 100)));
         vnpParams.put("vnp_ReturnUrl", returnUrl);
         vnpParams.put("vnp_CreateDate", formattedCreateDate);
+        vnpParams.put("vnp_ExpireDate", formattedExpireDate);
         vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
         StringBuilder signDataBuilder = new StringBuilder();
