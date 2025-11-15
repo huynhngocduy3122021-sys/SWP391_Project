@@ -41,6 +41,8 @@ public class ArticleRequest {
     @NotNull(message = "Public date cannot be null")
     private LocalDate publicDate;
 
+    private String contactPhone;
+
     @NotNull(message = "Member ID cannot be null")
     private Long memberId;
 

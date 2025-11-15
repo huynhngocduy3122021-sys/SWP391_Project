@@ -28,6 +28,7 @@ public class ArticleResponse {
     private LocalDateTime updateAt;
     private long memberId;
     private String memberName; // To display member name directly in response
+    private String contactPhone;
     private BigDecimal price;
     private ArticleStatus status;
     private long approvedById;
