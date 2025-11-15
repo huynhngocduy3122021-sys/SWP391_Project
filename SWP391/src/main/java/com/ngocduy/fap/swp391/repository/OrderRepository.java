@@ -29,7 +29,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "ORDER BY YEAR(o.date)")
     List<Object[]> calculateYearlyRevenue();
 
-    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) " +
+    @Query("SELECT SUM(o.totalAmount) " +
             "FROM Order o WHERE o.isDeleted = false AND o.status = 'PAID'")
     Double calculateTotalRevenuePaid();
 }
