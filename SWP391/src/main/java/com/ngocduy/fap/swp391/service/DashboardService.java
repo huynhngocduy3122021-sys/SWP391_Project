@@ -35,6 +35,11 @@ public class DashboardService {
         stat.put("totalArticles", totalArticles);
 
 
+        //tong doanh thu tu cac don hang da thanh toan
+        Double totalRevenuePaid = orderRepository.calculateTotalRevenuePaid();
+        stat.put("totalRevenuePaid", totalRevenuePaid);
+
+
         return stat;
     }
 
