@@ -19,7 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -203,29 +206,57 @@ public class PaymentController {
     // Handle VNPAY return callback - General (for backward compatibility)
     @GetMapping("/vnpay/return/vnp")
     public ResponseEntity<Map<String, Object>> handleVnpayReturn(@RequestParam Map<String, String> params) {
-        try {
-            String vnpResponseCode = params.get("vnp_ResponseCode");
-            String vnpTxnRef = params.get("vnp_TxnRef");
-            String vnpAmount = params.get("vnp_Amount");
-
-            Map<String, Object> result = new HashMap<>();
-
-            if ("00".equals(vnpResponseCode)) {
-                result.put("success", true);
-                result.put("message", "Payment successful");
-                result.put("transactionRef", vnpTxnRef);
-                result.put("amount", vnpAmount);
-            } else {
-                result.put("success", false);
-                result.put("message", "Payment failed with code: " + vnpResponseCode);
+        Map<String, Object> result = new HashMap<>();
+        String vnpResponseCode = params.get("vnp_ResponseCode");
+        String code = vnpResponseCode != null ? vnpResponseCode.trim() : "";
+        String vnpAmountStr = params.get("vnp_Amount");
+        Long vnpAmount = null;
+        if(vnpAmountStr != null && !vnpAmountStr.isEmpty()) {
+            try{
+                vnpAmount = Long.parseLong(vnpAmountStr) / 100;
+            } catch (NumberFormatException e){
+                vnpAmount = null;
             }
-
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("success", false);
-            errorResult.put("message", "Error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
         }
+
+        String vnpPayDate = params.get("vnp_PayDate");
+        String payDateStr = null;
+        if (vnpPayDate != null && vnpPayDate.length() == 14) {
+            DateTimeFormatter inFmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+            DateTimeFormatter outFmt = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy");
+            LocalDateTime payDate = LocalDateTime.parse(vnpPayDate, inFmt);
+            payDateStr = payDate.format(outFmt);
+        }
+
+        // Log đầy đủ để kiểm tra
+        System.out.println("==CALLBACK PARAMS: " + params);
+        System.out.println("==vnp_ResponseCode = [" + vnpResponseCode + "]");
+        // Lấy các trường để trả về FE
+        result.put("orderId", params.get("orderId"));
+        result.put("transactionNo", params.get("vnp_TransactionNo"));
+        result.put("transactionRef", params.get("vnp_TxnRef"));
+        result.put("amount", vnpAmount);
+        result.put("payDate", payDateStr);
+        result.put("errorCode", vnpResponseCode);
+
+        // Phân biệt trạng thái giao dịch
+        if ("00".equals(code)) {
+            result.put("success", true);
+            result.put("status", "success");
+            result.put("message", "Thanh toán thành công!");
+        } else if ("24".equals(code)) {
+            result.put("success", false);
+            result.put("status", "failed");
+            result.put("message", "Bạn đã hủy giao dịch!");
+        } else if (!code.isEmpty()) {
+            result.put("success", false);
+            result.put("status", "error");
+            result.put("message", "Có lỗi khi xử lý giao dịch: " + code);
+        } else {
+            result.put("success", false);
+            result.put("status", "error");
+            result.put("message", "Không nhận được trạng thái giao dịch.");
+        }
+        return ResponseEntity.ok(result);
     }
 }
