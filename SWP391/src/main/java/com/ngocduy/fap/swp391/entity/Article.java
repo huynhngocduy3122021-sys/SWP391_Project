@@ -39,6 +39,9 @@ public class Article {
     @NotEmpty(message = "location cannot be empty!")
     private String location;
 
+    @Column(name = "contact_phone", columnDefinition = "NVARCHAR(20)")
+    private String contactPhone;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "article_type", length = 50, columnDefinition = "NVARCHAR(255)")
     @NotNull(message = "article type cannot be empty!")

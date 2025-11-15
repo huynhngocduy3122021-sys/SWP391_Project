@@ -67,8 +67,7 @@ public class Filter extends OncePerRequestFilter {
         String uri = request.getRequestURI();
         String method = request.getMethod();
 
-        //Bỏ qua WebSocket handshake
-        if (uri.startsWith("/ws")) {
+        if ("OPTIONS".equalsIgnoreCase(method)) {
             filterChain.doFilter(request, response);
             return;
         }

@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -45,14 +46,14 @@ public class MemberController {
     }
 
 
-    /*
-    //test get all member
+
     @GetMapping("/allmember")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Member>> getAllMember() {
         List<Member> members = memberService.getAllMembers();
         return ResponseEntity.ok(members);
     }
-     */
+
 
     //test member hien dang login
     @GetMapping("/current")
@@ -62,6 +63,7 @@ public class MemberController {
 
     // GET member by ID
     @GetMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<MemberResponse> getMemberById(@PathVariable Long id) {
         MemberResponse member = memberService.getMemberById(id);
         return ResponseEntity.ok(member);
@@ -76,9 +78,17 @@ public class MemberController {
 
     //  DELETE
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteMember(@PathVariable Long id) {
         memberService.deleteMember(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/active")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<List<MemberResponse>> getAllActiveMembers() {
+        List<MemberResponse> response = memberService.getActiveMembers();
+        return ResponseEntity.ok(response);
     }
 }
 

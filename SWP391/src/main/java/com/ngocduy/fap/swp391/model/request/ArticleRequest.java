@@ -39,8 +39,9 @@ public class ArticleRequest {
     private ArticleType articleType;
 
     @NotNull(message = "Public date cannot be null")
-    @JsonFormat(pattern = "dd/MM/yyyy")
     private LocalDate publicDate;
+
+    private String contactPhone;
 
     @NotNull(message = "Member ID cannot be null")
     private Long memberId;

@@ -4,11 +4,9 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 @Data
-public class BIDRequest {
-    @NotNull
-     Double BIDAmount;
-    @NotNull
-    Long auctionId;
-    Long member;
-
+public class VnpayUrlRequest {
+    @NotNull(message = "Order ID is required")
+    private Long orderId;
 }
+
+

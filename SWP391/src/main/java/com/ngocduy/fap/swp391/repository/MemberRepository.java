@@ -1,6 +1,7 @@
 package com.ngocduy.fap.swp391.repository;
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.enums.MemberStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,10 +19,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     Member findByPhone(String phone);
 
     Member findByEmail(String email);
-    /*Chỉ lấy member chưa bị xóa
-    Optional<Member> findByEmailAndDeletedFalse(String email);*/
 
-    //  Lấy toàn bộ member chưa bị xóa
-    List<Member> findAllByDeletedFalse();
+    // Lấy toàn bộ member theo trạng thái
+    List<Member> findAllByStatus(MemberStatus status);
 
 }

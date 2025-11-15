@@ -8,6 +8,7 @@ import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -16,12 +17,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,6 +33,10 @@ public class PaymentService {
 
     @Autowired
     private OrderRepository orderRepository;
+
+    @Value("${payment.vnpay.return-url:}")
+    private String configuredReturnUrl;
+
     // Get all payments (excluding deleted)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findByIsDeletedFalse().stream()
@@ -137,10 +142,10 @@ public class PaymentService {
         // 1. Lấy Order đã tồn tại
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-        
+
         // 2. Tạo Payment record trong DB
         String txnRef = orderId + "-" + System.currentTimeMillis();
-        
+
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setMethod("VNPAY");
@@ -149,11 +154,15 @@ public class PaymentService {
         payment.setPaymentDate(LocalDateTime.now());
         payment.setVnpTxnRef(txnRef);
         paymentRepository.save(payment);
-        
-        // 3. Build URL VNPAY
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        LocalDateTime createDate = LocalDateTime.now();
-        String formattedCreateDate = createDate.format(formatter);
+
+        // 3. Build URL VNPAY (Vietnam time)
+        TimeZone vnTimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
+        Calendar cld = Calendar.getInstance(vnTimeZone);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
+        formatter.setTimeZone(vnTimeZone);
+        String formattedCreateDate = formatter.format(cld.getTime());
+        cld.add(Calendar.MINUTE, 15);
+        String formattedExpireDate = formatter.format(cld.getTime());
         String tmnCode = "2G68WVJ3";
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
@@ -172,6 +181,7 @@ public class PaymentService {
         vnpParams.put("vnp_Amount", String.valueOf((long)(order.getTotalAmount() * 100)));
         vnpParams.put("vnp_ReturnUrl", returnUrl);
         vnpParams.put("vnp_CreateDate", formattedCreateDate);
+        vnpParams.put("vnp_ExpireDate", formattedExpireDate);
         vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
         StringBuilder signDataBuilder = new StringBuilder();

@@ -2,12 +2,14 @@ package com.ngocduy.fap.swp391.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.ngocduy.fap.swp391.enums.MemberStatus;
 import com.ngocduy.fap.swp391.enums.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
@@ -49,8 +51,9 @@ public class Member implements UserDetails {
     @NotEmpty(message = "Email cannot be empty!")
     private String email;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status" , columnDefinition = "NVARCHAR(255)")
-    private String status = "ACTIVE";
+    private MemberStatus status = MemberStatus.ACTIVE;
 
     @Column(name = "sex")
     private String sex;
@@ -70,7 +73,7 @@ public class Member implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(/*() -> "ROLE_" + this.role*/);
+        return List.of(new SimpleGrantedAuthority("ROLE_" + this.role.name()));
     }
 
     @Override
@@ -83,15 +86,6 @@ public class Member implements UserDetails {
     @OneToMany(mappedBy = "member",cascade = CascadeType.ALL)
     @JsonIgnore
     List<Article> articles;
-
-
-    @OneToMany(mappedBy = "memberId")
-    @JsonIgnore
-    private List<Auction> auctions;
-
-    @OneToMany(mappedBy = "member")
-    @JsonIgnore
-    private List<BID> bids = new ArrayList<>();
 
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL)
     @JsonIgnore

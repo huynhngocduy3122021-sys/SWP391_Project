@@ -80,7 +80,6 @@ public class PaymentController {
         PaymentResponse payment = paymentService.updatePaymentStatus(id, status);
         return ResponseEntity.ok(payment);
     }
-
     // Delete payment
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
