@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -204,29 +205,30 @@ public class PaymentController {
     // Handle VNPAY return callback - General (for backward compatibility)
     @GetMapping("/vnpay/return/vnp")
     public ResponseEntity<Map<String, Object>> handleVnpayReturn(@RequestParam Map<String, String> params) {
-        try {
-            String vnpResponseCode = params.get("vnp_ResponseCode");
-            String vnpTxnRef = params.get("vnp_TxnRef");
-            String vnpAmount = params.get("vnp_Amount");
-            
-            Map<String, Object> result = new HashMap<>();
-            
-            if ("00".equals(vnpResponseCode)) {
-                result.put("success", true);
-                result.put("message", "Payment successful");
-                result.put("transactionRef", vnpTxnRef);
-                result.put("amount", vnpAmount);
-            } else {
-                result.put("success", false);
-                result.put("message", "Payment failed with code: " + vnpResponseCode);
-            }
-            
-            return ResponseEntity.ok(result);
-        } catch (Exception e) {
-            Map<String, Object> errorResult = new HashMap<>();
-            errorResult.put("success", false);
-            errorResult.put("message", "Error: " + e.getMessage());
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResult);
+        Map<String, Object> result = new HashMap<>();
+        String vnpResponseCode = params.get("vnp_ResponseCode");
+        String vnpTxnRef = params.get("vnp_TxnRef");
+        String vnpAmount = params.get("vnp_Amount");
+
+        result.put("transactionRef", vnpTxnRef);
+        result.put("amount", vnpAmount);
+        // ... có thể bổ sung các trường khác
+
+        if ("00".equals(vnpResponseCode)) {
+            result.put("success", true);
+            result.put("status", "success");
+            result.put("message", "Thanh toán thành công!");
+        } else if ("24".equals(vnpResponseCode)) {
+            result.put("success", false);
+            result.put("status", "failed");
+            result.put("message", "Bạn đã hủy giao dịch!");
+            result.put("errorCode", vnpResponseCode);
+        } else {
+            result.put("success", false);
+            result.put("status", "error");
+            result.put("message", "Có lỗi khi xử lý giao dịch: " + vnpResponseCode);
+            result.put("errorCode", vnpResponseCode);
         }
+        return ResponseEntity.ok(result);
     }
 }

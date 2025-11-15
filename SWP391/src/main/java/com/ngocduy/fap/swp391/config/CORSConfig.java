@@ -17,6 +17,7 @@ public class CORSConfig implements WebMvcConfigurer {
                 .allowedHeaders("*")
                 .exposedHeaders("Access-Control-Allow-Origin", "Access-Control-Allow-Methods","Access-Control-Allow-Headers")
                 .allowedMethods("*")
+                .allowedOrigins("http://localhost:5173")
                 .allowCredentials(false)
                 .maxAge(1440000);
     }
