@@ -21,6 +21,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -32,13 +34,13 @@ public class PaymentController {
 
     @Autowired
     private PaymentService paymentService;
-    
+
     @Autowired
     private PaymentRepository paymentRepository;
-    
+
     @Autowired
     private OrderRepository orderRepository;
-    
+
     @Autowired
     private SubscriptionRepository subscriptionRepository;
 
@@ -129,12 +131,12 @@ public class PaymentController {
             String vnpBankCode = params.get("vnp_BankCode");
             String vnpTransactionNo = params.get("vnp_TransactionNo");
             String vnpPayDate = params.get("vnp_PayDate");
-            
+
             if ("00".equals(vnpResponseCode)) {
                 // 1. Tìm Payment theo vnpTxnRef
                 Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
                         .orElseThrow(() -> new NotFoundException("Payment not found with txnRef: " + vnpTxnRef));
-                
+
                 // 2. Cập nhật Payment
                 payment.setStatus("COMPLETED");
                 payment.setVnpTransactionNo(vnpTransactionNo);
@@ -142,22 +144,22 @@ public class PaymentController {
                 payment.setVnpPayDate(vnpPayDate);
                 payment.setVnpResponseCode(vnpResponseCode);
                 paymentRepository.save(payment);
-                
+
                 // 3. Cập nhật Order
                 Order order = payment.getOrder();
                 order.setPaymentStatus(PaymentStatus.PAID);
                 order.setStatus(OrderStatus.CONFIRMED);
                 orderRepository.save(order);
-                
+
                 // 4. Tạo hoặc gia hạn Subscription
                 SubscriptionId subscriptionId = new SubscriptionId(
-                    order.getMember().getMemberId(),
-                    order.getPkg().getPackageId()
+                        order.getMember().getMemberId(),
+                        order.getPkg().getPackageId()
                 );
-                
+
                 Subscription subscription = subscriptionRepository.findById(subscriptionId)
-                    .orElse(null);
-                
+                        .orElse(null);
+
                 if (subscription == null) {
                     // Tạo mới nếu chưa có
                     subscription = new Subscription();
@@ -170,21 +172,21 @@ public class PaymentController {
                     subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
                 } else {
                     // Gia hạn nếu đã có
-                    java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now()) 
-                        ? subscription.getEndDate() 
-                        : java.time.LocalDateTime.now();
+                    java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now())
+                            ? subscription.getEndDate()
+                            : java.time.LocalDateTime.now();
                     subscription.setStartDate(newStartDate);
                     subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
                     subscription.setStatus(SubscriptionStatus.ACTIVE);
                     subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
                 }
                 subscriptionRepository.save(subscription);
-                
+
                 return ResponseEntity.ok(
-                    "Payment successful!\n" +
-                    "Order ID: " + orderId + "\n" +
-                    "Transaction: " + vnpTransactionNo + "\n" +
-                    "Amount: " + vnpAmount + " VND"
+                        "Payment successful!\n" +
+                                "Order ID: " + orderId + "\n" +
+                                "Transaction: " + vnpTransactionNo + "\n" +
+                                "Amount: " + vnpAmount + " VND"
                 );
             } else {
                 // Thanh toán thất bại - cập nhật Payment status
@@ -193,7 +195,7 @@ public class PaymentController {
                 payment.setStatus("FAILED");
                 payment.setVnpResponseCode(vnpResponseCode);
                 paymentRepository.save(payment);
-                
+
                 return ResponseEntity.ok("Payment failed with code: " + vnpResponseCode);
             }
         } catch (Exception e) {
@@ -201,33 +203,60 @@ public class PaymentController {
                     .body("Error: " + e.getMessage());
         }
     }
-    
+
     // Handle VNPAY return callback - General (for backward compatibility)
     @GetMapping("/vnpay/return/vnp")
     public ResponseEntity<Map<String, Object>> handleVnpayReturn(@RequestParam Map<String, String> params) {
         Map<String, Object> result = new HashMap<>();
         String vnpResponseCode = params.get("vnp_ResponseCode");
-        String vnpTxnRef = params.get("vnp_TxnRef");
-        String vnpAmount = params.get("vnp_Amount");
+        String code = vnpResponseCode != null ? vnpResponseCode.trim() : "";
+        String vnpAmountStr = params.get("vnp_Amount");
+        Long vnpAmount = null;
+        if(vnpAmountStr != null && !vnpAmountStr.isEmpty()) {
+            try{
+                vnpAmount = Long.parseLong(vnpAmountStr) / 100;
+            } catch (NumberFormatException e){
+                vnpAmount = null;
+            }
+        }
 
-        result.put("transactionRef", vnpTxnRef);
+        String vnpPayDate = params.get("vnp_PayDate");
+        String payDateStr = null;
+        if (vnpPayDate != null && vnpPayDate.length() == 14) {
+            DateTimeFormatter inFmt = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+            DateTimeFormatter outFmt = DateTimeFormatter.ofPattern("HH:mm:ss dd/MM/yyyy");
+            LocalDateTime payDate = LocalDateTime.parse(vnpPayDate, inFmt);
+            payDateStr = payDate.format(outFmt);
+        }
+
+        // Log đầy đủ để kiểm tra
+        System.out.println("==CALLBACK PARAMS: " + params);
+        System.out.println("==vnp_ResponseCode = [" + vnpResponseCode + "]");
+        // Lấy các trường để trả về FE
+        result.put("orderId", params.get("orderId"));
+        result.put("transactionNo", params.get("vnp_TransactionNo"));
+        result.put("transactionRef", params.get("vnp_TxnRef"));
         result.put("amount", vnpAmount);
-        // ... có thể bổ sung các trường khác
+        result.put("payDate", payDateStr);
+        result.put("errorCode", vnpResponseCode);
 
-        if ("00".equals(vnpResponseCode)) {
+        // Phân biệt trạng thái giao dịch
+        if ("00".equals(code)) {
             result.put("success", true);
             result.put("status", "success");
             result.put("message", "Thanh toán thành công!");
-        } else if ("24".equals(vnpResponseCode)) {
+        } else if ("24".equals(code)) {
             result.put("success", false);
             result.put("status", "failed");
             result.put("message", "Bạn đã hủy giao dịch!");
-            result.put("errorCode", vnpResponseCode);
+        } else if (!code.isEmpty()) {
+            result.put("success", false);
+            result.put("status", "error");
+            result.put("message", "Có lỗi khi xử lý giao dịch: " + code);
         } else {
             result.put("success", false);
             result.put("status", "error");
-            result.put("message", "Có lỗi khi xử lý giao dịch: " + vnpResponseCode);
-            result.put("errorCode", vnpResponseCode);
+            result.put("message", "Không nhận được trạng thái giao dịch.");
         }
         return ResponseEntity.ok(result);
     }

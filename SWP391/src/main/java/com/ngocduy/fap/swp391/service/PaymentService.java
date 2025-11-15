@@ -158,7 +158,7 @@ public class PaymentService {
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         //String returnUrl = "http://localhost:8080/api/payment/vnpay/return/success/" + orderId;
-        String returnUrl = "http://14.225.206.98:5173/payment/vnpay/return/vnp/result?orderId=" + orderId;
+        String returnUrl = "http://localhost:5173/payment/vnpay/return/vnp/result?orderId=" + orderId;
         String currCode = "VND";
         Map<String, String> vnpParams = new TreeMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
