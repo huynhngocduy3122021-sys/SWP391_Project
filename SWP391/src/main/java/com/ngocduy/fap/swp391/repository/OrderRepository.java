@@ -18,18 +18,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findByStatusAndIsDeletedFalse(OrderStatus status);
 
     @Query("SELECT YEAR(o.date) as year, MONTH(o.date) as month, SUM(o.totalAmount) " +
-            "FROM Order o WHERE o.isDeleted = false AND o.status = 'COMPLETED' " +
+            "FROM Order o WHERE o.isDeleted = false AND o.paymentStatus = 'PAID' " +
             "GROUP BY YEAR(o.date), MONTH(o.date) " +
             "ORDER BY YEAR(o.date), MONTH(o.date)")
     List<Object[]> calculateMonthlyRevenue();
 
     @Query("SELECT YEAR(o.date) as year, SUM(o.totalAmount) " +
-            "FROM Order o WHERE o.isDeleted = false AND o.status = 'COMPLETED' " +
+            "FROM Order o WHERE o.isDeleted = false AND o.paymentStatus = 'PAID' " +
             "GROUP BY YEAR(o.date)" +
             "ORDER BY YEAR(o.date)")
     List<Object[]> calculateYearlyRevenue();
 
     @Query("SELECT SUM(o.totalAmount) " +
-            "FROM Order o WHERE o.isDeleted = false AND o.status = 'PAID'")
+            "FROM Order o WHERE o.isDeleted = false AND o.paymentStatus = 'PAID'")
     Double calculateTotalRevenuePaid();
 }

@@ -21,4 +21,17 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Subs
     // Find subscriptions that are expired (endDate < now and status = ACTIVE)
     @Query("SELECT s FROM Subscription s WHERE s.status = :status AND s.endDate < :now AND s.isDeleted = false")
     List<Subscription> findExpiredSubscriptions(@Param("status") String status, @Param("now") LocalDateTime now);
+
+    @Query("SELECT s.pkg.name, COUNT(s) " +
+            "FROM Subscription s " +
+            "WHERE s.isDeleted = false AND s.status = 'ACTIVE' " +
+            "GROUP BY s.pkg.name")
+    List<Object[]> countActiveSubscriptionsByPackage();
+
+    @Query("SELECT MONTH(s.startDate) as month, s.pkg.name, COUNT(s) " +
+            "FROM Subscription s " +
+            "WHERE s.isDeleted = false AND s.status = 'ACTIVE' AND YEAR(s.startDate) = :year " +
+            "GROUP BY MONTH(s.startDate), s.pkg.name " +
+            "ORDER BY MONTH(s.startDate)")
+    List<Object[]> countMonthlyActiveSubscriptionsByPackage(@Param("year") int year);
 }

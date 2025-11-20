@@ -83,7 +83,35 @@ public class DashboardService {
 
     //phan bo so ng dung` moi~ goi
 
+    public Map<String, Object> getSubscriptionAnalytics(int year) {
+        Map<String, Object> result = new HashMap<>();
 
+        List<Object[]> distributionRows = subscriptionRepository.countActiveSubscriptionsByPackage();
+        Map<String, Object> distribution = new HashMap<>();
+        for (Object[] row : distributionRows) {
+            String packageName = (String) row[0];
+            Number count = (Number) row[1];
+            distribution.put(packageName, count != null ? count.longValue() : 0L);
+        }
+        result.put("distribution", distribution);
+
+        List<Object[]> monthlyRows = subscriptionRepository.countMonthlyActiveSubscriptionsByPackage(year);
+        List<Map<String, Object>> monthlyList = new ArrayList<>();
+        for (Object[] row : monthlyRows) {
+            Number month = (Number) row[0];
+            String packageName = (String) row[1];
+            Number count = (Number) row[2];
+
+            Map<String, Object> item = new HashMap<>();
+            item.put("month", month != null ? month.intValue() : null);
+            item.put("packageName", packageName);
+            item.put("count", count != null ? count.longValue() : 0L);
+            monthlyList.add(item);
+        }
+        result.put("monthly", monthlyList);
+
+        return result;
+    }
 
     //ti le dang ky cua moi~ goi
 

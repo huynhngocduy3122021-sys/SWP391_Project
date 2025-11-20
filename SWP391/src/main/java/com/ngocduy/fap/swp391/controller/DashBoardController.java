@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -34,6 +35,12 @@ public class DashBoardController {
     public ResponseEntity getYearlyRevenue() {
         Map<String, Object> yearlyRevenue = dashboardService.getYearlyRevenue();
         return ResponseEntity.ok(yearlyRevenue);
+    }
+
+    @GetMapping("/subscriptions")
+    public ResponseEntity getSubscriptionAnalytics(@RequestParam int year) {
+        Map<String, Object> analytics = dashboardService.getSubscriptionAnalytics(year);
+        return ResponseEntity.ok(analytics);
     }
 
 }
