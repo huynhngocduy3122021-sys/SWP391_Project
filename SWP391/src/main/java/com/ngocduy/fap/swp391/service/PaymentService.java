@@ -2,13 +2,13 @@ package com.ngocduy.fap.swp391.service;
 
 import com.ngocduy.fap.swp391.entity.Order;
 import com.ngocduy.fap.swp391.entity.Payment;
+import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.Mac;
@@ -17,12 +17,12 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,10 +33,6 @@ public class PaymentService {
 
     @Autowired
     private OrderRepository orderRepository;
-
-    @Value("${payment.vnpay.return-url:}")
-    private String configuredReturnUrl;
-
     // Get all payments (excluding deleted)
     public List<PaymentResponse> getAllPayments() {
         return paymentRepository.findByIsDeletedFalse().stream()
@@ -52,7 +48,7 @@ public class PaymentService {
     }
 
     // Get payments by status (excluding deleted)
-    public List<PaymentResponse> getPaymentsByStatus(String status) {
+    public List<PaymentResponse> getPaymentsByStatus(PaymentStatus status) {
         return paymentRepository.findByStatusAndIsDeletedFalse(status).stream()
                 .map(this::convertToResponse)
                 .collect(Collectors.toList());
@@ -69,7 +65,7 @@ public class PaymentService {
         payment.setOrder(order);
         payment.setMethod(request.getMethod());
         payment.setAmount(order.getTotalAmount());
-        payment.setStatus("PENDING");
+        payment.setStatus(PaymentStatus.PENDING);
         payment.setPaymentDate(LocalDateTime.now());
         
         Payment savedPayment = paymentRepository.save(payment);
@@ -77,16 +73,16 @@ public class PaymentService {
     }
 
     // Update payment status
-    public PaymentResponse updatePaymentStatus(Long id, String status) {
+    /*public PaymentResponse updatePaymentStatus(Long id, String status) {
         Payment payment = paymentRepository.findByPayIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
         
-        payment.setStatus(status);
+        payment.setStatus();
         payment.setPaymentDate(LocalDateTime.now());
         
         Payment updatedPayment = paymentRepository.save(payment);
         return convertToResponse(updatedPayment);
-    }
+    }*/
 
     // Delete payment (soft delete)
     public void deletePayment(Long id) {
@@ -105,7 +101,7 @@ public class PaymentService {
             throw new IllegalStateException("Can only process PENDING payments");
         }
 
-        payment.setStatus("COMPLETED");
+        payment.setStatus(PaymentStatus.PAID);
         payment.setPaymentDate(LocalDateTime.now());
 
         Payment updatedPayment = paymentRepository.save(payment);
@@ -117,7 +113,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findByPayIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Payment not found with id: " + id));
 
-        payment.setStatus("FAILED");
+        payment.setStatus(PaymentStatus.FAILED);
 
         Payment updatedPayment = paymentRepository.save(payment);
         return convertToResponse(updatedPayment);
@@ -132,7 +128,7 @@ public class PaymentService {
             throw new IllegalStateException("Can only refund COMPLETED payments");
         }
 
-        payment.setStatus("REFUNDED");
+        payment.setStatus(PaymentStatus.REFUNDED);
 
         Payment updatedPayment = paymentRepository.save(payment);
         return convertToResponse(updatedPayment);
@@ -142,32 +138,31 @@ public class PaymentService {
         // 1. Lấy Order đã tồn tại
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new NotFoundException("Order not found with id: " + orderId));
-
+        if (order.getPaymentStatus() == PaymentStatus.PAID) {
+            throw new IllegalStateException("Đơn hàng đã được thanh toán. Không thể tạo payment mới.");
+        }
         // 2. Tạo Payment record trong DB
         String txnRef = orderId + "-" + System.currentTimeMillis();
-
+        
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setMethod("VNPAY");
         payment.setAmount(order.getTotalAmount());
-        payment.setStatus("INITIATED");
+        payment.setStatus(PaymentStatus.INITIATED);
         payment.setPaymentDate(LocalDateTime.now());
         payment.setVnpTxnRef(txnRef);
         paymentRepository.save(payment);
-
-        // 3. Build URL VNPAY (Vietnam time)
-        TimeZone vnTimeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh");
-        Calendar cld = Calendar.getInstance(vnTimeZone);
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMddHHmmss");
-        formatter.setTimeZone(vnTimeZone);
-        String formattedCreateDate = formatter.format(cld.getTime());
-        cld.add(Calendar.MINUTE, 15);
-        String formattedExpireDate = formatter.format(cld.getTime());
+        
+        // 3. Build URL VNPAY
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        LocalDateTime createDate = LocalDateTime.now();
+        String formattedCreateDate = createDate.format(formatter);
         String tmnCode = "2G68WVJ3";
         String secretKey = "VBEI56XQVKA55AV245XA0KRX1Q4DNLFO";
         String vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         //String returnUrl = "http://localhost:8080/api/payment/vnpay/return/success/" + orderId;
-        String returnUrl = "http://localhost:5173/payment/vnpay/return/vnp/result?orderId=" + orderId;
+        String returnUrl = "http://localhost:5173/payment/result";
+        //String returnUrl = "http://14.225.206.98:5173/payment/result";
         String currCode = "VND";
         Map<String, String> vnpParams = new TreeMap<>();
         vnpParams.put("vnp_Version", "2.1.0");
@@ -181,7 +176,6 @@ public class PaymentService {
         vnpParams.put("vnp_Amount", String.valueOf((long)(order.getTotalAmount() * 100)));
         vnpParams.put("vnp_ReturnUrl", returnUrl);
         vnpParams.put("vnp_CreateDate", formattedCreateDate);
-        vnpParams.put("vnp_ExpireDate", formattedExpireDate);
         vnpParams.put("vnp_IpAddr", "167.99.74.201");
 
         StringBuilder signDataBuilder = new StringBuilder();
@@ -231,7 +225,6 @@ public class PaymentService {
         response.setTransactionCode(payment.getTransactionCode());
         response.setAmount(payment.getAmount());
         response.setPaymentDate(payment.getPaymentDate());
-        response.setStatus(payment.getStatus());
         return response;
     }
 }

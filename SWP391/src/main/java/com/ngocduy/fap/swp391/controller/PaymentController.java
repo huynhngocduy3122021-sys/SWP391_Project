@@ -60,7 +60,7 @@ public class PaymentController {
 
     // Get payments by status
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(@PathVariable String status) {
+    public ResponseEntity<List<PaymentResponse>> getPaymentsByStatus(@PathVariable PaymentStatus status) {
         List<PaymentResponse> payments = paymentService.getPaymentsByStatus(status);
         return ResponseEntity.ok(payments);
     }
@@ -73,13 +73,13 @@ public class PaymentController {
     }
 
     // Update payment status
-    @PatchMapping("/{id}/status")
+   /* @PatchMapping("/{id}/status")
     public ResponseEntity<PaymentResponse> updatePaymentStatus(
             @PathVariable Long id,
             @RequestParam String status) {
         PaymentResponse payment = paymentService.updatePaymentStatus(id, status);
         return ResponseEntity.ok(payment);
-    }
+    }*/
     // Delete payment
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePayment(@PathVariable Long id) {
@@ -137,7 +137,7 @@ public class PaymentController {
                         .orElseThrow(() -> new NotFoundException("Payment not found with txnRef: " + vnpTxnRef));
 
                 // 2. Cập nhật Payment
-                payment.setStatus("COMPLETED");
+                payment.setStatus(PaymentStatus.PAID);
                 payment.setVnpTransactionNo(vnpTransactionNo);
                 payment.setVnpBankCode(vnpBankCode);
                 payment.setVnpPayDate(vnpPayDate);
@@ -191,7 +191,7 @@ public class PaymentController {
                 // Thanh toán thất bại - cập nhật Payment status
                 Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
                         .orElseThrow(() -> new NotFoundException("Payment not found"));
-                payment.setStatus("FAILED");
+                payment.setStatus(PaymentStatus.FAILED);
                 payment.setVnpResponseCode(vnpResponseCode);
                 paymentRepository.save(payment);
 
@@ -232,7 +232,7 @@ public class PaymentController {
         System.out.println("==CALLBACK PARAMS: " + params);
         System.out.println("==vnp_ResponseCode = [" + vnpResponseCode + "]");
         // Lấy các trường để trả về FE
-        result.put("orderId", params.get("orderId"));
+
         result.put("transactionNo", params.get("vnp_TransactionNo"));
         result.put("transactionRef", params.get("vnp_TxnRef"));
         result.put("amount", vnpAmount);
@@ -241,9 +241,75 @@ public class PaymentController {
 
         // Phân biệt trạng thái giao dịch
         if ("00".equals(code)) {
+
+            // Lấy vnp_TxnRef để tìm payment trong DB
+            String vnpTxnRef = params.get("vnp_TxnRef"); // check xem tham số FE gửi về hay không!
+
+            Payment payment = paymentRepository.findByVnpTxnRef(vnpTxnRef)
+                    .orElseThrow(() -> new NotFoundException("Payment not found with txnRef: " + vnpTxnRef));
+            Order order = payment.getOrder();
+
+            if (order.getPaymentStatus() == PaymentStatus.PAID) {
+                System.out.println("Order " + order.getOrderId() + " đã được thanh toán trước đó! Bỏ qua callback lặp.");
+                result.put("success", false);
+                result.put("status", "duplicate");
+                result.put("message", "Đơn hàng đã được thanh toán trước đó, không thể thanh toán lại.");
+                result.put("orderId", order.getOrderId());
+                return ResponseEntity.ok(result);
+            }
+
+            payment.setStatus(PaymentStatus.PAID);
+            payment.setVnpTransactionNo(params.get("vnp_TransactionNo"));
+            payment.setVnpBankCode(params.get("vnp_BankCode"));
+            payment.setVnpPayDate(params.get("vnp_PayDate"));
+            payment.setVnpResponseCode(vnpResponseCode);
+            paymentRepository.save(payment);
+
+            order.setPaymentStatus(PaymentStatus.PAID);
+            order.setStatus(OrderStatus.CONFIRMED);
+            orderRepository.save(order);
+
+// Tạo/gia hạn subscription
+            SubscriptionId subscriptionId = new SubscriptionId(
+                    order.getMember().getMemberId(), order.getPkg().getPackageId()
+            );
+
+            Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+            if (subscription == null) {
+                subscription = new Subscription();
+                subscription.setId(subscriptionId);
+                subscription.setMember(order.getMember());
+                subscription.setPkg(order.getPkg());
+                subscription.setStartDate(LocalDateTime.now());
+                subscription.setEndDate(LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+            } else {
+                LocalDateTime newStartDate = subscription.getEndDate().isAfter(LocalDateTime.now())
+                        ? subscription.getEndDate() : LocalDateTime.now();
+                subscription.setStartDate(newStartDate);
+                subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                subscription.setStatus(SubscriptionStatus.ACTIVE);
+                subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+            }
+            subscriptionRepository.save(subscription);
             result.put("success", true);
             result.put("status", "success");
             result.put("message", "Thanh toán thành công!");
+            result.put("orderId", order.getOrderId());
+            result.put("subscription", Map.of(
+                    "packageId", subscription.getId().getPackageId(),
+                    "packageName", order.getPkg().getName(),
+                    "startDate", subscription.getStartDate().toString(),
+                    "endDate", subscription.getEndDate().toString(),
+                    "status", subscription.getStatus().name(),
+                    "remainingPosts", subscription.getRemainingPosts()
+            ));
+
+            // Trả thêm info order/package nếu muốn
+            result.put("packageName", order.getPkg().getName());
+            result.put("packageDuration", order.getPkg().getDurationDays());
+
         } else if ("24".equals(code)) {
             result.put("success", false);
             result.put("status", "failed");
