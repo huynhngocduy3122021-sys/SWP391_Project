@@ -175,6 +175,7 @@ public class MemberService implements UserDetailsService {
         response.setYearOfBirth(member.getYearOfBirth());
         response.setSex(member.getSex());
         response.setStatus(member.getStatus());
+        response.setRole(member.getRole());
         return response;
     }
 

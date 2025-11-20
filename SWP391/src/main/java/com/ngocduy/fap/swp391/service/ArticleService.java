@@ -546,9 +546,7 @@ public class ArticleService {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found with id: " + id));
 
-        // Soft delete the base article
         article.setDeleted(true);
-        article.setStatus(ArticleStatus.DELETED);
         articleRepository.save(article);
         return true;
 
