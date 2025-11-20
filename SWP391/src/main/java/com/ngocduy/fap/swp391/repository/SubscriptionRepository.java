@@ -22,6 +22,18 @@ public interface SubscriptionRepository extends JpaRepository<Subscription, Subs
     @Query("SELECT s FROM Subscription s WHERE s.status = :status AND s.endDate < :now AND s.isDeleted = false")
     List<Subscription> findExpiredSubscriptions(@Param("status") String status, @Param("now") LocalDateTime now);
 
+    @Query("""
+            SELECT s FROM Subscription s
+            WHERE s.id.memberId = :memberId
+              AND s.status = 'ACTIVE'
+              AND s.isDeleted = false
+              AND (s.endDate IS NULL OR s.endDate > :now)
+              AND COALESCE(s.remainingPosts, 0) > 0
+            ORDER BY s.endDate ASC
+            """)
+    Optional<Subscription> findFirstActiveSubscriptionWithRemainingPosts(@Param("memberId") Long memberId,
+                                                                         @Param("now") LocalDateTime now);
+
     @Query("SELECT s.pkg.name, COUNT(s) " +
             "FROM Subscription s " +
             "WHERE s.isDeleted = false AND s.status = 'ACTIVE' " +

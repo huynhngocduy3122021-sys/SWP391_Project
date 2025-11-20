@@ -34,6 +34,7 @@ public class ArticleService {
     private final CarArticleRepository carArticleRepository;
     private final MotorArticleRepository motorArticleRepository;
     private final ImageRepository imageRepository;
+    private final SubscriptionRepository subscriptionRepository;
     private final ModelMapper modelMapper;
 
     @Autowired
@@ -43,6 +44,7 @@ public class ArticleService {
                           CarArticleRepository carArticleRepository,
                           MotorArticleRepository motorArticleRepository,
                           ImageRepository imageRepository,
+                          SubscriptionRepository subscriptionRepository,
                           ModelMapper modelMapper) {
         this.articleRepository = articleRepository;
         this.memberRepository = memberRepository;
@@ -50,6 +52,7 @@ public class ArticleService {
         this.carArticleRepository = carArticleRepository;
         this.motorArticleRepository = motorArticleRepository;
         this.imageRepository = imageRepository;
+        this.subscriptionRepository = subscriptionRepository;
         this.modelMapper = modelMapper;
     }
 
@@ -170,6 +173,9 @@ public class ArticleService {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found with id: " + request.getMemberId()));
 
+        // Chỉ cho phép tạo bài đăng khi thành viên còn lượt trong gói
+        consumePostingSlot(member.getMemberId());
+
         Article article = modelMapper.map(request, Article.class); // Map common fields
         article.setArticleId(null); // Ensure new entity
         article.setArticleType(type); // Set the specific type
@@ -248,6 +254,22 @@ public class ArticleService {
         }
 
         return articleRepository.save(existingArticle);
+    }
+
+    private void consumePostingSlot(Long memberId) {
+        Subscription subscription = subscriptionRepository
+                .findFirstActiveSubscriptionWithRemainingPosts(memberId, LocalDateTime.now())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                        "Bạn đã hết lượt đăng tin. Vui lòng mua gói đăng tin để tiếp tục."));
+
+        Integer remaining = subscription.getRemainingPosts();
+        if (remaining == null || remaining <= 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Bạn đã hết lượt đăng tin. Vui lòng mua gói đăng tin để tiếp tục.");
+        }
+
+        subscription.setRemainingPosts(remaining - 1);
+        subscriptionRepository.save(subscription);
     }
 
     // --- General Article Operations ---
