@@ -37,6 +37,7 @@ public class Filter extends OncePerRequestFilter {
             "POST:/api/members/login",
             "POST:/api/payment/**",
             "GET:/api/payment/**",
+            "GET:/api/article",
             "PATCH:/api/payment/**",
             "GET:/swagger-ui/**",
             "GET:/v3/api-docs/**",
