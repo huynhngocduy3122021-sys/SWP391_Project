@@ -62,7 +62,7 @@ public class Article {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @Column(name = "price", precision = 10, scale = 2) // Precision and scale for decimal
+    @Column(name = "price", precision = 20, scale = 2) // Precision and scale for decimal
     private BigDecimal price;
 
     @Enumerated(EnumType.STRING)
