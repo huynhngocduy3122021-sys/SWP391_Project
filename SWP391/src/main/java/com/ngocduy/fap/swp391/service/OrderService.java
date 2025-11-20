@@ -1,22 +1,19 @@
 package com.ngocduy.fap.swp391.service;
 
-import com.ngocduy.fap.swp391.entity.Member;
-import com.ngocduy.fap.swp391.entity.Order;
-import com.ngocduy.fap.swp391.entity.Packages;
+import com.ngocduy.fap.swp391.entity.*;
 import com.ngocduy.fap.swp391.enums.OrderStatus;
 import com.ngocduy.fap.swp391.enums.PaymentStatus;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.OrderRequest;
 import com.ngocduy.fap.swp391.model.response.OrderResponse;
-import com.ngocduy.fap.swp391.repository.MemberRepository;
-import com.ngocduy.fap.swp391.repository.OrderRepository;
-import com.ngocduy.fap.swp391.repository.PackagesRepository;
-import com.ngocduy.fap.swp391.repository.PaymentRepository;
+import com.ngocduy.fap.swp391.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,6 +30,9 @@ public class OrderService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private SubscriptionRepository subscriptionRepository;
 
     // Get all orders (excluding deleted)
     public List<OrderResponse> getAllOrders() {
@@ -71,6 +71,20 @@ public class OrderService {
 
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new NotFoundException("Member not found with id: " + request.getMemberId()));
+
+        SubscriptionId subscriptionId = new SubscriptionId(member.getMemberId(), pkg.getPackageId());
+        Optional<Subscription> subOpt = subscriptionRepository.findById(subscriptionId);
+        if (subOpt.isPresent()) {
+            Subscription sub = subOpt.get();
+            if (
+                    sub.getStatus() == SubscriptionStatus.ACTIVE &&
+                            sub.getEndDate() != null &&
+                            sub.getEndDate().isAfter(java.time.LocalDateTime.now())
+            ) {
+                throw new IllegalStateException("Bạn đã sở hữu gói này và còn hạn sử dụng. Không thể mua lại!");
+            }
+        }
+
 
         // 2. Tạo đơn hàng với trạng thái PENDING
         Order order = new Order();

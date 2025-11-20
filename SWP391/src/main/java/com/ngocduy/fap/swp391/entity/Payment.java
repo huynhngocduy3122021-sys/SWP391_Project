@@ -1,5 +1,6 @@
 package com.ngocduy.fap.swp391.entity;
 
+import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -29,7 +30,8 @@ public class Payment {
     private LocalDateTime paymentDate;
 
     @Column(name = "Status")
-    private String status = "PENDING";
+    @Enumerated(EnumType.STRING)
+    private PaymentStatus status = PaymentStatus.PENDING;
 
     @Column(name = "IsDeleted")
     private boolean isDeleted = false;

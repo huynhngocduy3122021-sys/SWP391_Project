@@ -5,7 +5,8 @@ public enum PaymentStatus {
     PENDING ("Chờ thanh toán"),
     PAID("Đã thanh toán"),
     FAILED("Thanh toán thất bại"),
-    REFUNDED("Đã hoàn tiền");
+    REFUNDED("Đã hoàn tiền"),
+    DUPLICATE ("Lập đơn hàng");
 
     private final String vietnameseName;
 
