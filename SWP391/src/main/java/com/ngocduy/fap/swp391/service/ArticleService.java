@@ -14,17 +14,17 @@ import com.ngocduy.fap.swp391.model.response.CarArticleResponse;
 import com.ngocduy.fap.swp391.model.response.ImageResponse;
 import com.ngocduy.fap.swp391.model.response.MotorArticleResponse;
 import com.ngocduy.fap.swp391.repository.*;
-import org.springframework.transaction.annotation.Transactional;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @Service
 public class ArticleService {
@@ -56,7 +56,6 @@ public class ArticleService {
         this.modelMapper = modelMapper;
     }
 
-
     // Helper method to convert Article entity to its base response DTO
     private ArticleResponse convertToArticleResponse(Article article) {
         ArticleResponse response = modelMapper.map(article, ArticleResponse.class);
@@ -84,21 +83,21 @@ public class ArticleService {
             response.setApprovedByName(null);
         }
         response.setDeleted(article.isDeleted());
-        
+
         // Map images
         if (article.getImages() != null && !article.getImages().isEmpty()) {
             List<ImageResponse> imageResponses = article.getImages().stream()
                     .map(img -> new ImageResponse(img.getImageId(), img.getUrl(), img.isMain()))
                     .collect(Collectors.toList());
             response.setImages(imageResponses);
-            
+
             // Set main image URL for convenience
             article.getImages().stream()
                     .filter(Image::isMain)
                     .findFirst()
                     .ifPresent(img -> response.setMainImageUrl(img.getUrl()));
         }
-        
+
         return response;
     }
 
@@ -167,16 +166,28 @@ public class ArticleService {
 
     }
 
-
     // Generic helper to save the base Article entity
     private Article saveArticle(ArticleRequest request, ArticleType type) {
+
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found with id: " + request.getMemberId()));
 
         // Chỉ cho phép tạo bài đăng khi thành viên còn lượt trong gói
         consumePostingSlot(member.getMemberId());
 
-        Article article = modelMapper.map(request, Article.class); // Map common fields
+        // Ensure ModelMapper does not try to map identifier or relations from the request into the entity
+        TypeMap<ArticleRequest, Article> articleTypeMap =
+                modelMapper.getTypeMap(ArticleRequest.class, Article.class);
+        if (articleTypeMap == null) {
+            articleTypeMap = modelMapper.createTypeMap(ArticleRequest.class, Article.class);
+            articleTypeMap.addMappings(mapper -> {
+                mapper.skip(Article::setArticleId);
+                mapper.skip(Article::setApprovedBy);
+            });
+        }
+
+        Article article = articleTypeMap.map(request); // Map common fields without touching ID
+
         article.setArticleId(null); // Ensure new entity
         article.setArticleType(type); // Set the specific type
 
@@ -192,15 +203,15 @@ public class ArticleService {
         }
 
         Article savedArticle = articleRepository.save(article);
-        
+
         // Handle images if provided
         if (request.getImageUrls() != null && !request.getImageUrls().isEmpty()) {
             createImagesForArticle(savedArticle, request.getImageUrls());
         }
-        
+
         return savedArticle;
     }
-    
+
     // Helper method to create images for an article
     private void createImagesForArticle(Article article, List<String> imageUrls) {
         for (int i = 0; i < imageUrls.size(); i++) {
@@ -242,7 +253,17 @@ public class ArticleService {
             existingArticle.setApprovedBy(null);
         }
 
-        modelMapper.map(request, existingArticle); // Map common fields from the request
+        // Manually map updatable scalar fields from the request instead of using ModelMapper
+        // to avoid identifier mapping issues and configuration errors.
+        existingArticle.setTitle(request.getTitle());
+        existingArticle.setContent(request.getContent());
+        existingArticle.setLocation(request.getLocation());
+        existingArticle.setContactPhone(request.getContactPhone());
+        existingArticle.setPublicDate(request.getPublicDate());
+
+        if (request.getPrice() != null) {
+            existingArticle.setPrice(request.getPrice());
+        }
 
         // Set status from request
         if (request.getStatus() != null) {
@@ -446,7 +467,13 @@ public class ArticleService {
 
         MotorArticle existingMotorArticle = motorArticleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "MotorArticle data not found for Article id: " + id));
-        modelMapper.map(request, existingMotorArticle);
+        // Manually map fields from request to avoid ModelMapper configuration issues
+        existingMotorArticle.setBrand(request.getBrand());
+        existingMotorArticle.setYear(request.getYear());
+        existingMotorArticle.setVehicleCapacity(request.getVehicleCapacity());
+        existingMotorArticle.setOrigin(request.getOrigin());
+        existingMotorArticle.setMilesTraveled(request.getMilesTraveled());
+        existingMotorArticle.setWarrantyMonths(request.getWarrantyMonths());
         
         // Handle license plate - avoid "string" or empty values
         if (request.getLicensesPlate() != null && 
@@ -476,7 +503,14 @@ public class ArticleService {
 
         BatteryArticle existingBatteryArticle = batteryArticleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "BatteryArticle data not found for Article id: " + id));
-        modelMapper.map(request, existingBatteryArticle);
+        // Manually map fields from request to avoid ModelMapper configuration issues
+        existingBatteryArticle.setVolt(request.getVolt());
+        existingBatteryArticle.setCapacity(request.getCapacity());
+        existingBatteryArticle.setSize(request.getSize());
+        existingBatteryArticle.setWeight(request.getWeight());
+        existingBatteryArticle.setBrand(request.getBrand());
+        existingBatteryArticle.setOrigin(request.getOrigin());
+        existingBatteryArticle.setWarrantyMonths(request.getWarrantyMonths());
         existingBatteryArticle.setArticle(updatedBaseArticle);
         batteryArticleRepository.save(existingBatteryArticle);
 
