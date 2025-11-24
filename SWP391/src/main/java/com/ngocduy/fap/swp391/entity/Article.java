@@ -98,6 +98,9 @@ public class Article {
     @Column(name = "consumed_slot", nullable = true)
     private Boolean consumedSlot = false;
 
+    @Column(name = "rejection_reason", columnDefinition = "NVARCHAR(MAX)")
+    private String rejectionReason;
+
     @OneToMany(mappedBy = "article", cascade =  CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Image> images;
 

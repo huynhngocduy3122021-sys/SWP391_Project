@@ -35,6 +35,8 @@ public class Filter extends OncePerRequestFilter {
     private final List<String> PUBLIC_API = List.of(
             "POST:/api/members/register",
             "POST:/api/members/login",
+            "POST:/api/members/forgot-password",
+            "POST:/api/members/reset-password",
             "POST:/api/payment/**",
             "GET:/api/payment/**",
             "GET:/api/article",

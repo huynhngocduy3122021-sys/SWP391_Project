@@ -23,4 +23,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     // Lấy toàn bộ member theo trạng thái
     List<Member> findAllByStatus(MemberStatus status);
 
+    // Find member by reset token
+    Member findByResetToken(String resetToken);
+
 }

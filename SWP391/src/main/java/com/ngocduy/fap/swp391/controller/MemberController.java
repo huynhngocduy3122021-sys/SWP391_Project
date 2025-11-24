@@ -2,7 +2,9 @@
 
 
 import com.ngocduy.fap.swp391.entity.Member;
+import com.ngocduy.fap.swp391.model.request.ForgotPasswordRequest;
 import com.ngocduy.fap.swp391.model.request.LoginRequest;
+import com.ngocduy.fap.swp391.model.request.ResetPasswordRequest;
 import com.ngocduy.fap.swp391.model.response.MemberResponse;
 import com.ngocduy.fap.swp391.service.MemberService;
 import com.ngocduy.fap.swp391.model.request.MemberRequest;
@@ -13,10 +15,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@SecurityRequirement(name = "api")
 @RequestMapping("/api/members")
 public class MemberController {
 
@@ -87,6 +90,26 @@ public class MemberController {
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<MemberResponse>> getAllActiveMembers() {
         List<MemberResponse> response = memberService.getActiveMembers();
+        return ResponseEntity.ok(response);
+    }
+
+    // Forgot Password - Send reset link via email
+    @PostMapping("/forgot-password")
+    @SecurityRequirement(name = "")
+    public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        memberService.forgotPassword(request.getEmail());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "If the email exists, a password reset link has been sent.");
+        return ResponseEntity.ok(response);
+    }
+
+    // Reset Password - Update password with token
+    @PostMapping("/reset-password")
+    @SecurityRequirement(name = "")
+    public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        memberService.resetPassword(request.getToken(), request.getNewPassword());
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Password has been reset successfully.");
         return ResponseEntity.ok(response);
     }
 }

@@ -36,6 +36,7 @@ public class ArticleService {
     private final ImageRepository imageRepository;
     private final SubscriptionRepository subscriptionRepository;
     private final ModelMapper modelMapper;
+    private final EmailService emailService;
 
     @Autowired
     public ArticleService(ArticleRepository articleRepository,
@@ -45,7 +46,8 @@ public class ArticleService {
                           MotorArticleRepository motorArticleRepository,
                           ImageRepository imageRepository,
                           SubscriptionRepository subscriptionRepository,
-                          ModelMapper modelMapper) {
+                          ModelMapper modelMapper,
+                          EmailService emailService) {
         this.articleRepository = articleRepository;
         this.memberRepository = memberRepository;
         this.batteryArticleRepository = batteryArticleRepository;
@@ -54,6 +56,7 @@ public class ArticleService {
         this.imageRepository = imageRepository;
         this.subscriptionRepository = subscriptionRepository;
         this.modelMapper = modelMapper;
+        this.emailService = emailService;
     }
 
     // Helper method to convert Article entity to its base response DTO
@@ -82,6 +85,8 @@ public class ArticleService {
             response.setApprovedById(0L);
             response.setApprovedByName(null);
         }
+        response.setApprovalDate(article.getApprovalDate());
+        response.setRejectionReason(article.getRejectionReason());
         response.setDeleted(article.isDeleted());
 
         // Map images
@@ -583,7 +588,7 @@ public class ArticleService {
     }
 
     @Transactional
-    public ArticleResponse rejectArticle(Long articleId, Long memberId) {
+    public ArticleResponse rejectArticle(Long articleId, Long memberId, String rejectionReason) {
         Article article = articleRepository.findById(articleId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found with id: " + articleId));
 
@@ -621,10 +626,28 @@ public class ArticleService {
             article.setConsumedSlot(false); // Đánh dấu đã hoàn lại slot
         }
 
+        // Lưu lý do từ chối
+        article.setRejectionReason(rejectionReason);
         article.setStatus(ArticleStatus.REJECTED);
         article.setApprovedBy(member); // member who rejected it
         article.setApprovalDate(LocalDateTime.now()); // Set approval date even on rejection, or add a rejectionDate field
         Article updatedArticle = articleRepository.save(article);
+
+        // Gửi email thông báo từ chối cho người dùng
+        if (article.getMember() != null && article.getMember().getEmail() != null) {
+            try {
+                emailService.sendArticleRejectionEmail(
+                        article.getMember().getEmail(),
+                        article.getMember().getName(),
+                        article.getTitle(),
+                        rejectionReason
+                );
+            } catch (Exception e) {
+                // Log error but don't fail the rejection process
+                System.err.println("Failed to send rejection email: " + e.getMessage());
+            }
+        }
+
         return convertToArticleResponse(updatedArticle);
     }
 

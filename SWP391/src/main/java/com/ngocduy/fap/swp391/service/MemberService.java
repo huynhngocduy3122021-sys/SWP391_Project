@@ -21,7 +21,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.resource.ResourceTransformer;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -44,6 +46,9 @@ public class MemberService implements UserDetailsService {
      private TokenService tokenService;
     @Autowired
     private ResourceTransformer resourceTransformer;
+    
+    @Autowired
+    private EmailService emailService;
 
     public MemberResponse register(MemberRequest member) {
         // Xử lý logic cho register
@@ -161,6 +166,46 @@ public class MemberService implements UserDetailsService {
         Member member = memberRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Member not found with id: " + id));
         member.setStatus(MemberStatus.INACTIVE);
+        memberRepository.save(member);
+    }
+
+    // Forgot Password - Generate reset token and send email
+    public void forgotPassword(String email) {
+        Member member = memberRepository.findMemberByEmail(email);
+        if (member == null) {
+            // Don't reveal if email exists or not for security
+            return;
+        }
+
+        // Generate reset token
+        String resetToken = UUID.randomUUID().toString();
+        member.setResetToken(resetToken);
+        member.setResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token valid for 1 hour
+        memberRepository.save(member);
+
+        // Generate reset link (adjust frontend URL as needed)
+        String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
+
+        // Send email
+        emailService.sendPasswordResetEmail(member.getEmail(), member.getName(), resetLink);
+    }
+
+    // Reset Password - Validate token and update password
+    public void resetPassword(String token, String newPassword) {
+        Member member = memberRepository.findByResetToken(token);
+        if (member == null) {
+            throw new AuthenticationException("Invalid or expired reset token");
+        }
+
+        // Check if token is expired
+        if (member.getResetTokenExpiry() == null || member.getResetTokenExpiry().isBefore(LocalDateTime.now())) {
+            throw new AuthenticationException("Reset token has expired");
+        }
+
+        // Update password
+        member.setPassword(passwordEncoder.encode(newPassword));
+        member.setResetToken(null);
+        member.setResetTokenExpiry(null);
         memberRepository.save(member);
     }
 

@@ -33,6 +33,8 @@ public class ArticleResponse {
     private ArticleStatus status;
     private long approvedById;
     private String approvedByName;
+    private LocalDateTime approvalDate;
+    private String rejectionReason;
     private boolean deleted;
     private List<ImageResponse> images; // List of all images
     private String mainImageUrl; // URL of the main image for convenience

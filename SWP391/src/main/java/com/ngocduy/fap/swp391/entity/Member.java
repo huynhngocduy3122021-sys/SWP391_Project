@@ -70,6 +70,13 @@ public class Member implements UserDetails {
     @Column(name = "is_deleted")
     private boolean deleted = false;
 
+    // Password Reset Token
+    @Column(name = "reset_token", columnDefinition = "NVARCHAR(255)")
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private java.time.LocalDateTime resetTokenExpiry;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

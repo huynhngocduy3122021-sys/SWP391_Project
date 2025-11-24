@@ -6,6 +6,7 @@ import com.ngocduy.fap.swp391.enums.ArticleStatus;
 import com.ngocduy.fap.swp391.model.request.BatteryArticleRequest;
 import com.ngocduy.fap.swp391.model.request.CarArticleRequest;
 import com.ngocduy.fap.swp391.model.request.MotorArticleRequest;
+import com.ngocduy.fap.swp391.model.request.RejectArticleRequest;
 import com.ngocduy.fap.swp391.model.response.ArticleResponse;
 import com.ngocduy.fap.swp391.model.response.BatteryArticleResponse;
 import com.ngocduy.fap.swp391.model.response.CarArticleResponse;
@@ -93,8 +94,11 @@ public class ArticleController {
 
     @PostMapping("/{articleId}/reject")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ArticleResponse> rejectArticle(@PathVariable Long articleId, @RequestParam("memberId") Long memberId) {
-        ArticleResponse rejectedArticle = articleService.rejectArticle(articleId, memberId);
+    public ResponseEntity<ArticleResponse> rejectArticle(
+            @PathVariable Long articleId, 
+            @RequestParam("memberId") Long memberId,
+            @Valid @RequestBody RejectArticleRequest request) {
+        ArticleResponse rejectedArticle = articleService.rejectArticle(articleId, memberId, request.getRejectionReason());
         return ResponseEntity.ok(rejectedArticle);
     }
 
