@@ -4,7 +4,6 @@ package com.ngocduy.fap.swp391.exception;
 import com.ngocduy.fap.swp391.exception.exceptions.AuctionException;
 import com.ngocduy.fap.swp391.exception.exceptions.AuthenticationException;
 import com.ngocduy.fap.swp391.exception.exceptions.BIDException;
-import com.ngocduy.fap.swp391.exception.exceptions.DuplicateResourceException;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -15,7 +14,6 @@ import org.springframework.security.authentication.InternalAuthenticationService
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
@@ -75,14 +73,18 @@ public class APIExceptionHandler {
             message = "Email already exists";
         } else if (exception.getMessage().contains("phone")) {
             message = "Phone number already exists";
+        } else if (exception.getMessage().contains("UKf0ee4ixoenpw9xp4899knji01")) {
+            message = "Licenses plate already exists";
+        } else if (exception.getMessage().contains("UK10wx023ek80vivvivif5h00bv")) {
+            message = "Licenses plate already exists";
         }
+
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(message);
     }
     @ExceptionHandler(AuctionException.class)
     public ResponseEntity handleAuctionException(AuctionException exception) {
         return ResponseEntity.status(401).body(exception.getMessage());
     }
-
 
 
 }
