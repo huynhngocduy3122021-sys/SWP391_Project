@@ -146,6 +146,7 @@ public class SubscriptionService {
         }
 
         subscription.setStatus(SubscriptionStatus.CANCELLED);
+        subscription.setDeleted(true);
 
         Subscription updatedSubscription = subscriptionRepository.save(subscription);
         return convertToResponse(updatedSubscription);
@@ -160,12 +161,15 @@ public class SubscriptionService {
         Long memberId = order.getMember().getMemberId();
         Long packageId = order.getPkg().getPackageId();
 
-        // Check if active subscription already exists
+        // Check if subscription already exists (kể cả deleted)
         SubscriptionId id = new SubscriptionId(memberId, packageId);
-        java.util.Optional<Subscription> existingSub = subscriptionRepository.findByIdAndIsDeletedFalse(id);
+        java.util.Optional<Subscription> existingSubOpt = subscriptionRepository.findById(id);
         
-        if (existingSub.isPresent() && existingSub.get().getStatus() == SubscriptionStatus.ACTIVE) {
-            throw new IllegalStateException("Member already has an active subscription for this package");
+        // Nếu đã có subscription (kể cả deleted), set isDeleted = true để ẩn đi
+        if (existingSubOpt.isPresent()) {
+            Subscription existingSub = existingSubOpt.get();
+            existingSub.setDeleted(true);
+            subscriptionRepository.save(existingSub);
         }
 
         // Get member and package
@@ -186,6 +190,7 @@ public class SubscriptionService {
         subscription.setEndDate(java.time.LocalDateTime.now().plusDays(pkg.getDurationDays()));
         subscription.setRemainingPosts(pkg.getNumberOfPost());
         subscription.setStatus(SubscriptionStatus.ACTIVE);
+        subscription.setDeleted(false); // Subscription mới không bị deleted
 
         Subscription savedSubscription = subscriptionRepository.save(subscription);
         return convertToResponse(savedSubscription);

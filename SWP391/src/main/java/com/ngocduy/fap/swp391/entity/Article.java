@@ -80,7 +80,23 @@ public class Article {
     @Column(name = "approval_date")
     private LocalDateTime approvalDate;
 
+    // Lưu subscription member_id và package_id để có thể tìm lại subscription
+    @Column(name = "subscription_member_id", nullable = true)
+    private Long subscriptionMemberId;
 
+    @Column(name = "subscription_package_id", nullable = true)
+    private Long subscriptionPackageId;
+
+    // Relationship để đọc subscription (read-only)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumns({
+        @JoinColumn(name = "subscription_member_id", referencedColumnName = "MemberID", nullable = true, insertable = false, updatable = false),
+        @JoinColumn(name = "subscription_package_id", referencedColumnName = "PackageID", nullable = true, insertable = false, updatable = false)
+    })
+    private Subscription subscription;
+
+    @Column(name = "consumed_slot", nullable = true)
+    private Boolean consumedSlot = false;
 
     @OneToMany(mappedBy = "article", cascade =  CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Image> images;

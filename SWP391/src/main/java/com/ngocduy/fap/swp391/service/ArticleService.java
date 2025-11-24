@@ -172,8 +172,8 @@ public class ArticleService {
         Member member = memberRepository.findById(request.getMemberId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Member not found with id: " + request.getMemberId()));
 
-        // Chỉ cho phép tạo bài đăng khi thành viên còn lượt trong gói
-        consumePostingSlot(member.getMemberId());
+        // Reserve subscription (không trừ slot ngay, chỉ lưu thông tin)
+        Subscription reservedSubscription = reservePostingSlot(member.getMemberId());
 
         // Ensure ModelMapper does not try to map identifier or relations from the request into the entity
         TypeMap<ArticleRequest, Article> articleTypeMap =
@@ -194,6 +194,11 @@ public class ArticleService {
         // Relations
         article.setMember(member);
         article.setApprovedBy(null); // Admin is set during approve/reject
+        article.setSubscription(reservedSubscription); // Lưu subscription đã reserve (cho relationship)
+        // Lưu subscription member_id và package_id để có thể tìm lại sau
+        article.setSubscriptionMemberId(reservedSubscription.getId().getMemberId());
+        article.setSubscriptionPackageId(reservedSubscription.getId().getPackageId());
+        article.setConsumedSlot(false); // Chưa trừ slot, chờ admin duyệt
 
         // Set status from request or default to PENDING_APPROVAL
         if(request.getStatus() != null) {
@@ -277,7 +282,8 @@ public class ArticleService {
         return articleRepository.save(existingArticle);
     }
 
-    private void consumePostingSlot(Long memberId) {
+    // Reserve subscription for article (không trừ slot ngay, chỉ reserve)
+    private Subscription reservePostingSlot(Long memberId) {
         Subscription subscription = subscriptionRepository
                 .findFirstActiveSubscriptionWithRemainingPosts(memberId, LocalDateTime.now())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST,
@@ -289,8 +295,8 @@ public class ArticleService {
                     "Bạn đã hết lượt đăng tin. Vui lòng mua gói đăng tin để tiếp tục.");
         }
 
-        subscription.setRemainingPosts(remaining - 1);
-        subscriptionRepository.save(subscription);
+        // Không trừ slot ngay, chỉ return subscription để lưu vào article
+        return subscription;
     }
 
     // --- General Article Operations ---
@@ -532,6 +538,42 @@ public class ArticleService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
 
+        // Trừ slot khi admin duyệt (chỉ trừ nếu chưa trừ trước đó)
+        if (!Boolean.TRUE.equals(article.getConsumedSlot())) {
+            // Tìm subscription từ subscriptionMemberId và subscriptionPackageId đã lưu
+            Subscription subscription = null;
+            if (article.getSubscriptionMemberId() != null && article.getSubscriptionPackageId() != null) {
+                // Tìm subscription từ ID đã lưu
+                SubscriptionId subscriptionId = new SubscriptionId(
+                        article.getSubscriptionMemberId(),
+                        article.getSubscriptionPackageId()
+                );
+                subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+            }
+            
+            // Nếu không tìm thấy từ ID đã lưu, tìm lại từ memberId
+            if (subscription == null) {
+                subscription = subscriptionRepository
+                        .findFirstActiveSubscriptionWithRemainingPosts(article.getMember().getMemberId(), LocalDateTime.now())
+                        .orElse(null);
+                
+                // Nếu tìm thấy, lưu ID vào article
+                if (subscription != null) {
+                    article.setSubscriptionMemberId(subscription.getId().getMemberId());
+                    article.setSubscriptionPackageId(subscription.getId().getPackageId());
+                }
+            }
+            
+            // Trừ slot nếu có subscription và còn slot
+            if (subscription != null) {
+                Integer remaining = subscription.getRemainingPosts();
+                if (remaining != null && remaining > 0) {
+                    subscription.setRemainingPosts(remaining - 1);
+                    subscriptionRepository.save(subscription);
+                    article.setConsumedSlot(true); // Đánh dấu đã trừ slot
+                }
+            }
+        }
 
         article.setStatus(ArticleStatus.APPROVED);
         article.setApprovedBy(member);
@@ -547,6 +589,37 @@ public class ArticleService {
 
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Admin not found with id: " + memberId));
+
+        // Hoàn lại slot nếu đã trừ (khi approve rồi reject lại)
+        if (Boolean.TRUE.equals(article.getConsumedSlot())) {
+            // Tìm subscription từ subscriptionMemberId và subscriptionPackageId đã lưu
+            Subscription subscription = null;
+            if (article.getSubscriptionMemberId() != null && article.getSubscriptionPackageId() != null) {
+                // Tìm subscription từ ID đã lưu
+                SubscriptionId subscriptionId = new SubscriptionId(
+                        article.getSubscriptionMemberId(),
+                        article.getSubscriptionPackageId()
+                );
+                subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
+            }
+            
+            // Nếu không tìm thấy từ ID đã lưu, tìm lại từ memberId
+            if (subscription == null) {
+                subscription = subscriptionRepository
+                        .findFirstActiveSubscriptionWithRemainingPosts(article.getMember().getMemberId(), LocalDateTime.now())
+                        .orElse(null);
+            }
+            
+            // Hoàn lại slot nếu có subscription
+            if (subscription != null) {
+                Integer remaining = subscription.getRemainingPosts();
+                if (remaining != null) {
+                    subscription.setRemainingPosts(remaining + 1);
+                    subscriptionRepository.save(subscription);
+                }
+            }
+            article.setConsumedSlot(false); // Đánh dấu đã hoàn lại slot
+        }
 
         article.setStatus(ArticleStatus.REJECTED);
         article.setApprovedBy(member); // member who rejected it

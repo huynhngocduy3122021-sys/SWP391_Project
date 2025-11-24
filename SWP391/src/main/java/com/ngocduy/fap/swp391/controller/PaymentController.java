@@ -169,15 +169,36 @@ public class PaymentController {
                     subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
                     subscription.setStatus(SubscriptionStatus.ACTIVE);
                     subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                    subscription.setDeleted(false); // Subscription mới không bị deleted
                 } else {
-                    // Gia hạn nếu đã có
-                    java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now())
-                            ? subscription.getEndDate()
-                            : java.time.LocalDateTime.now();
-                    subscription.setStartDate(newStartDate);
-                    subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
-                    subscription.setStatus(SubscriptionStatus.ACTIVE);
-                    subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                    // Nếu subscription cũ đã bị deleted hoặc expired/cancelled, ẩn nó đi và tạo mới
+                    if (subscription.isDeleted() || 
+                        subscription.getStatus() == SubscriptionStatus.EXPIRED || 
+                        subscription.getStatus() == SubscriptionStatus.CANCELLED) {
+                        subscription.setDeleted(true);
+                        subscriptionRepository.save(subscription);
+                        
+                        // Tạo subscription mới
+                        subscription = new Subscription();
+                        subscription.setId(subscriptionId);
+                        subscription.setMember(order.getMember());
+                        subscription.setPkg(order.getPkg());
+                        subscription.setStartDate(java.time.LocalDateTime.now());
+                        subscription.setEndDate(java.time.LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                        subscription.setStatus(SubscriptionStatus.ACTIVE);
+                        subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                        subscription.setDeleted(false);
+                    } else {
+                        // Gia hạn nếu đã có và còn active
+                        java.time.LocalDateTime newStartDate = subscription.getEndDate().isAfter(java.time.LocalDateTime.now())
+                                ? subscription.getEndDate()
+                                : java.time.LocalDateTime.now();
+                        subscription.setStartDate(newStartDate);
+                        subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                        subscription.setStatus(SubscriptionStatus.ACTIVE);
+                        subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                        subscription.setDeleted(false); // Đảm bảo không bị deleted
+                    }
                 }
                 subscriptionRepository.save(subscription);
 
@@ -284,13 +305,35 @@ public class PaymentController {
                 subscription.setEndDate(LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
                 subscription.setStatus(SubscriptionStatus.ACTIVE);
                 subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                subscription.setDeleted(false); // Subscription mới không bị deleted
             } else {
-                LocalDateTime newStartDate = subscription.getEndDate().isAfter(LocalDateTime.now())
-                        ? subscription.getEndDate() : LocalDateTime.now();
-                subscription.setStartDate(newStartDate);
-                subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
-                subscription.setStatus(SubscriptionStatus.ACTIVE);
-                subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                // Nếu subscription cũ đã bị deleted hoặc expired/cancelled, ẩn nó đi và tạo mới
+                if (subscription.isDeleted() || 
+                    subscription.getStatus() == SubscriptionStatus.EXPIRED || 
+                    subscription.getStatus() == SubscriptionStatus.CANCELLED) {
+                    subscription.setDeleted(true);
+                    subscriptionRepository.save(subscription);
+                    
+                    // Tạo subscription mới
+                    subscription = new Subscription();
+                    subscription.setId(subscriptionId);
+                    subscription.setMember(order.getMember());
+                    subscription.setPkg(order.getPkg());
+                    subscription.setStartDate(LocalDateTime.now());
+                    subscription.setEndDate(LocalDateTime.now().plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(order.getPkg().getNumberOfPost());
+                    subscription.setDeleted(false);
+                } else {
+                    // Gia hạn nếu đã có và còn active
+                    LocalDateTime newStartDate = subscription.getEndDate().isAfter(LocalDateTime.now())
+                            ? subscription.getEndDate() : LocalDateTime.now();
+                    subscription.setStartDate(newStartDate);
+                    subscription.setEndDate(newStartDate.plusDays(order.getPkg().getDurationDays()));
+                    subscription.setStatus(SubscriptionStatus.ACTIVE);
+                    subscription.setRemainingPosts(subscription.getRemainingPosts() + order.getPkg().getNumberOfPost());
+                    subscription.setDeleted(false); // Đảm bảo không bị deleted
+                }
             }
             subscriptionRepository.save(subscription);
             result.put("success", true);
