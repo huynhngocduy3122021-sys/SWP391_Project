@@ -9,10 +9,12 @@ import com.ngocduy.fap.swp391.enums.PaymentStatus;
 import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.exception.exceptions.NotFoundException;
 import com.ngocduy.fap.swp391.model.request.PaymentRequest;
+import com.ngocduy.fap.swp391.model.response.EmailDetail;
 import com.ngocduy.fap.swp391.model.response.PaymentResponse;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.PaymentRepository;
 import com.ngocduy.fap.swp391.repository.SubscriptionRepository;
+import com.ngocduy.fap.swp391.service.EmailService;
 import com.ngocduy.fap.swp391.service.PaymentService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,6 +45,9 @@ public class PaymentController {
 
     @Autowired
     private SubscriptionRepository subscriptionRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     // Get all payments
     @GetMapping
@@ -290,10 +295,11 @@ public class PaymentController {
             order.setStatus(OrderStatus.CONFIRMED);
             orderRepository.save(order);
 
-// Tạo/gia hạn subscription
-            SubscriptionId subscriptionId = new SubscriptionId(
-                    order.getMember().getMemberId(), order.getPkg().getPackageId()
-            );
+            Long memberId = order.getMember().getMemberId();
+            Long newPackageId = order.getPkg().getPackageId();
+
+            // Tạo/gia hạn subscription cho gói vừa thanh toán
+            SubscriptionId subscriptionId = new SubscriptionId(memberId, newPackageId);
 
             Subscription subscription = subscriptionRepository.findById(subscriptionId).orElse(null);
             if (subscription == null) {
@@ -336,10 +342,22 @@ public class PaymentController {
                 }
             }
             subscriptionRepository.save(subscription);
+
+            // Sau khi kích hoạt gói mới, hủy các gói ACTIVE khác của member (nếu có) để đảm bảo logic nâng cấp.
+            java.util.List<Subscription> otherActiveSubs = subscriptionRepository.findByIdMemberIdAndIsDeletedFalse(memberId);
+            for (Subscription s : otherActiveSubs) {
+                if (s.getId().getPackageId() != newPackageId
+                        && s.getStatus() == SubscriptionStatus.ACTIVE) {
+                    s.setStatus(SubscriptionStatus.CANCELLED);
+                    s.setDeleted(true);
+                    subscriptionRepository.save(s);
+                }
+            }
             result.put("success", true);
             result.put("status", "success");
             result.put("message", "Thanh toán thành công!");
             result.put("orderId", order.getOrderId());
+            result.put("orderCode", vnpTxnRef);
             result.put("subscription", Map.of(
                     "packageId", subscription.getId().getPackageId(),
                     "packageName", order.getPkg().getName(),
@@ -348,6 +366,26 @@ public class PaymentController {
                     "status", subscription.getStatus().name(),
                     "remainingPosts", subscription.getRemainingPosts()
             ));
+
+            // Gửi email xác nhận đơn hàng cho khách
+            try {
+                String recipient = order.getMember().getEmail();
+                String fullName = order.getMember().getName();
+                if (recipient != null && !recipient.isEmpty()) {
+                    emailService.sendOrderConfirmationEmail(
+                            recipient,
+                            fullName,
+                            vnpTxnRef,
+                            order.getPkg().getName(),
+                            order.getTotalAmount(),
+                            subscription.getStartDate(),
+                            subscription.getEndDate()
+                    );
+                }
+            } catch (Exception e) {
+                // Log lỗi gửi email nhưng không làm fail giao dịch thanh toán
+                System.err.println("Failed to send order confirmation email: " + e.getMessage());
+            }
 
             // Trả thêm info order/package nếu muốn
             result.put("packageName", order.getPkg().getName());

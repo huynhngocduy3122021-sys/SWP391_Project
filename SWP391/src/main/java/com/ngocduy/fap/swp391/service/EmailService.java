@@ -14,6 +14,9 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 @Service
 public class EmailService {
 
@@ -69,6 +72,74 @@ public class EmailService {
             return false;
         } catch (Exception e) {
             logger.error("Unexpected error while sending email to {}: {}", emailDetail.getRecipient(), e.getMessage(), e);
+            return false;
+        }
+    }
+
+    /**
+     * Gửi email xác nhận đơn hàng sau khi thanh toán thành công.
+     * Sử dụng template order-confirm.html với các biến:
+     *  - name
+     *  - orderCode (mã đơn hàng hiển thị cho user, ví dụ vnp_TxnRef)
+     *  - packageName
+     *  - amount (đã format)
+     *  - startDate, endDate (đã format)
+     */
+    public boolean sendOrderConfirmationEmail(String recipient,
+                                              String fullName,
+                                              String orderCode,
+                                              String packageName,
+                                              float amount,
+                                              LocalDateTime startDate,
+                                              LocalDateTime endDate) {
+        try {
+            if (recipient == null || recipient.isEmpty()) {
+                logger.error("Order confirmation email recipient is null or empty");
+                return false;
+            }
+
+            logger.info("Preparing to send order confirmation email to: {}", recipient);
+
+            Context context = new Context();
+            context.setVariable("name", fullName != null ? fullName : "Người dùng");
+            context.setVariable("orderCode", orderCode);
+            context.setVariable("packageName", packageName != null ? packageName : "Gói dịch vụ");
+
+     
+            String amountText = String.format("%,.0f VNĐ", amount);
+            context.setVariable("amount", amountText);
+
+            DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("HH:mm dd/MM/yyyy");
+            if (startDate != null) {
+                context.setVariable("startDate", startDate.format(dateFormatter));
+            }
+            if (endDate != null) {
+                context.setVariable("endDate", endDate.format(dateFormatter));
+            }
+
+            String text = templateEngine.process("order-confirm", context);
+            logger.debug("Order confirmation email template processed successfully");
+
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+            mimeMessageHelper.setFrom(fromEmail != null ? fromEmail : "admin@gmail.com");
+            mimeMessageHelper.setTo(recipient);
+            mimeMessageHelper.setText(text, true);
+            mimeMessageHelper.setSubject("Xác nhận thanh toán đơn hàng #" + orderCode);
+
+            mailSender.send(mimeMessage);
+            logger.info("Order confirmation email sent successfully to: {}", recipient);
+            return true;
+
+        } catch (MessagingException e) {
+            logger.error("MessagingException while sending order confirmation email to {}: {}", recipient, e.getMessage(), e);
+            return false;
+        } catch (MailException e) {
+            logger.error("MailException while sending order confirmation email to {}: {}", recipient, e.getMessage(), e);
+            return false;
+        } catch (Exception e) {
+            logger.error("Unexpected error while sending order confirmation email to {}: {}", recipient, e.getMessage(), e);
             return false;
         }
     }

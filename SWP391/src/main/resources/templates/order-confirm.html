@@ -4,7 +4,7 @@
     <meta charset="utf-8">
     <meta name="x-apple-disable-message-reformatting">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Xác nhận đơn hàng – Tên Dự Án</title>
+    <title>Xác nhận đơn hàng – EcoXe</title>
     <style>
         /* Clients that respect <style> */
         .hover-underline:hover{ text-decoration: underline !important; }
@@ -23,7 +23,7 @@
 <body class="bg-body" style="margin:0; padding:0; width:100% !important; background:#f6f6f6;">
 <!-- Preheader (hidden in most clients) -->
 <div style="display:none; overflow:hidden; line-height:1px; opacity:0; max-height:0; max-width:0;">
-    Xác nhận đơn hàng của bạn #12345 đã thành công!
+    Đơn hàng #[[${orderCode}]] của bạn trên EcoXe đã thanh toán thành công.
 </div>
 
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-spacing:0; border-collapse:collapse; width:100%; background:#f6f6f6;">
@@ -33,7 +33,7 @@
                 <!-- Header -->
                 <tr>
                     <td align="center" style="background:#38414a; color:#ffffff; border-radius:8px 8px 0 0; padding:24px 16px;">
-                        <a href="https://example.com" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:28px; font-weight:700; color:#ffffff; text-decoration:none;">Tên Dự Án</a>
+                        <a href="http://localhost:5173" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:28px; font-weight:700; color:#ffffff; text-decoration:none;">EcoXe</a>
                         <div class="hero" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; margin-top:8px; color:#ffffff; opacity:.9;">
                             Cảm ơn bạn đã đặt hàng!
                         </div>
@@ -46,12 +46,13 @@
                         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                             <tr>
                                 <td class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; color:#333333; padding:0 0 16px 0;">
-                                    Xin chào <strong>Người dùng</strong>,
+                                    Xin chào <strong>[[${name}]]</strong>,
                                 </td>
                             </tr>
                             <tr>
                                 <td class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:16px; color:#333333; padding:0 0 16px 0;">
-                                    Đơn hàng <strong>#12345</strong> của bạn đã được xác nhận thành công và sẽ sớm được xử lý.
+                                    Đơn hàng <strong>#[[${orderCode}]]</strong> của bạn đã được thanh toán thành công.
+                                    Gói dịch vụ: <strong>[[${packageName}]]</strong>.
                                 </td>
                             </tr>
                             <tr>
@@ -64,25 +65,20 @@
                                     <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse; border:1px solid #eeeeee; border-radius:4px;">
                                         <thead>
                                         <tr>
-                                            <th align="left" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#555555; padding:10px; border-bottom:1px solid #eeeeee;">Sản phẩm</th>
+                                            <th align="left" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#555555; padding:10px; border-bottom:1px solid #eeeeee;">Gói dịch vụ</th>
                                             <th align="right" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#555555; padding:10px; border-bottom:1px solid #eeeeee;">Số lượng</th>
-                                            <th align="right" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#555555; padding:10px; border-bottom:1px solid #eeeeee;">Giá</th>
+                                            <th align="right" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#555555; padding:10px; border-bottom:1px solid #eeeeee;">Thành tiền</th>
                                         </tr>
                                         </thead>
                                         <tbody>
                                         <tr>
-                                            <td class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">Áo thun cơ bản</td>
+                                            <td class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">[[${packageName}]]</td>
                                             <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">1</td>
-                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">250.000 VNĐ</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">Quần jean slim-fit</td>
-                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">1</td>
-                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">500.000 VNĐ</td>
+                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; border-bottom:1px solid #eeeeee;">[[${amount}]]</td>
                                         </tr>
                                         <tr>
                                             <td colspan="2" align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; font-weight:700;">Tổng cộng:</td>
-                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; font-weight:700;">750.000 VNĐ</td>
+                                            <td align="right" class="text" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#333333; padding:10px; font-weight:700;">[[${amount}]]</td>
                                         </tr>
                                         </tbody>
                                     </table>
@@ -91,10 +87,10 @@
                             <!-- Button -->
                             <tr>
                                 <td align="left" style="padding:0 0 24px 0;">
-                                    <a href="https://example.com/don-hang/12345"
+                                    <a href="http://localhost:5173/my-subscriptions"
                                        class="btn hover-underline"
                                        style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:14px; color:#ffffff; text-decoration:none; font-weight:700; display:inline-block; background:#f1556c; border:1px solid #f1556c; border-radius:6px; padding:12px 18px;">
-                                        Xem chi tiết đơn hàng
+                                        Xem chi tiết gói
                                     </a>
                                 </td>
                             </tr>
@@ -102,10 +98,11 @@
                             <!-- Helper text -->
                             <tr>
                                 <td class="text-muted" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:13px; color:#777777; line-height:1.6;">
-                                    Bạn có thể theo dõi trạng thái đơn hàng của mình trong mục
-                                    <a href="https://example.com/tai-khoan/don-hang" style="color:#0d6efd; text-decoration:underline;">Lịch sử đơn hàng</a>
-                                    trên tài khoản của bạn. Cần hỗ trợ? Hãy phản hồi lại email này hoặc truy cập
-                                    <a href="https://example.com/support" style="color:#0d6efd; text-decoration:underline;">Trung tâm hỗ trợ</a>.
+                                    Thời gian hiệu lực gói: từ <strong>[[${startDate}]]</strong> đến
+                                    <strong>[[${endDate}]]</strong> (theo giờ Việt Nam).
+                                    <br/>
+                                    Bạn có thể xem lại gói đã mua trong mục
+                                    <a href="http://localhost:5173/my-subscriptions" style="color:#0d6efd; text-decoration:underline;">Gói đăng tin của tôi</a>.
                                 </td>
                             </tr>
                         </table>
@@ -116,14 +113,14 @@
                 <tr>
                     <td align="center" style="padding:16px 12px 22px;">
                         <div class="text-muted" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#999999;">
-                            Cảm ơn bạn đã tin tưởng và mua sắm tại Tên Dự Án.
+                            Cảm ơn bạn đã tin tưởng và sử dụng dịch vụ của EcoXe.
                         </div>
                         <div class="text-muted" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#999999; padding-top:8px;">
-                            <a href="https://example.com/unsubscribe" style="color:#999999; text-decoration:underline;">Hủy nhận email</a> •
-                            <a href="https://example.com/privacy" style="color:#999999; text-decoration:underline;">Chính sách bảo mật</a>
+                            <a href="http://localhost:5173" style="color:#999999; text-decoration:underline;">Trang chủ EcoXe</a> •
+                            <a href="http://localhost:5173/my-subscriptions" style="color:#999999; text-decoration:underline;">Gói đăng tin của tôi</a>
                         </div>
                         <div class="text-muted" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#999999; padding-top:8px;">
-                            © 2025 Tên Dự Án, 123 Đường Mẫu, Quận Trung Tâm, TP. HCM
+                            © 2025 EcoXe – Nền tảng mua bán pin và xe điện đã qua sử dụng.
                         </div>
                     </td>
                 </tr>
@@ -135,7 +132,7 @@
                     <td class="text-muted" style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; font-size:12px; color:#999999; text-align:center; padding:0 8px;">
                         Không bấm được nút? Sao chép và dán liên kết này vào trình duyệt:
                         <br>
-                        <span style="word-break:break-all;">https://example.com/don-hang/12345</span>
+                        <span style="word-break:break-all;">http://localhost:5173/my-subscriptions</span>
                     </td>
                 </tr>
             </table>
