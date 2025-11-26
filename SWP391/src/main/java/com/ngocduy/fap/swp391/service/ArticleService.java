@@ -675,7 +675,7 @@ public class ArticleService {
     public boolean deleteArticle(Long id) {
         Article article = articleRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Article not found with id: " + id));
-
+        article.setStatus(ArticleStatus.DELETED);
         article.setDeleted(true);
         articleRepository.save(article);
         return true;

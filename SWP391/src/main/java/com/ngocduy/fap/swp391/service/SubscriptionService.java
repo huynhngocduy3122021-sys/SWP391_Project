@@ -108,6 +108,7 @@ public class SubscriptionService {
         Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
                 .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
         subscription.setDeleted(true);
+        subscription.setStatus(SubscriptionStatus.CANCELLED);
         subscriptionRepository.save(subscription);
     }
 

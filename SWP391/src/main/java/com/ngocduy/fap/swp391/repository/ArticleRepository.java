@@ -16,5 +16,6 @@ public interface ArticleRepository extends JpaRepository<Article, Long> {
 
     List<Article> findByMember_MemberId(Long memberId);
 
+    long countByStatusAndDeletedFalse(ArticleStatus status);
 
 }

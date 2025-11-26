@@ -2,6 +2,7 @@ package com.ngocduy.fap.swp391.repository;
 
 import com.ngocduy.fap.swp391.entity.Subscription;
 import com.ngocduy.fap.swp391.entity.SubscriptionId;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.jpa.repository.JpaRepository;

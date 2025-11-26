@@ -1,5 +1,7 @@
 package com.ngocduy.fap.swp391.service;
 
+import com.ngocduy.fap.swp391.enums.ArticleStatus;
+import com.ngocduy.fap.swp391.enums.SubscriptionStatus;
 import com.ngocduy.fap.swp391.repository.ArticleRepository;
 import com.ngocduy.fap.swp391.repository.OrderRepository;
 import com.ngocduy.fap.swp391.repository.SubscriptionRepository;
@@ -31,7 +33,7 @@ public class DashboardService {
 
 
         //tong so luong article
-        long totalArticles = articleRepository.count();
+        long totalArticles = articleRepository.countByStatusAndDeletedFalse(ArticleStatus.APPROVED);
         stat.put("totalArticles", totalArticles);
 
 
