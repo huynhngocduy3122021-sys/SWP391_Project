@@ -66,15 +66,6 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscription);
     }
 
-    // Delete subscription
-    @DeleteMapping("/{memberId}/{packageId}")
-    public ResponseEntity<Void> deleteSubscription(
-            @PathVariable Long memberId,
-            @PathVariable Long packageId) {
-        subscriptionService.deleteSubscription(memberId, packageId);
-        return ResponseEntity.noContent().build();
-    }
-
     // Activate subscription
     @PatchMapping("/{memberId}/{packageId}/activate")
     public ResponseEntity<SubscriptionResponse> activateSubscription(

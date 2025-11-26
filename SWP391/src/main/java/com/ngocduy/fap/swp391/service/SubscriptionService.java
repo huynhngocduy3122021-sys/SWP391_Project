@@ -102,16 +102,6 @@ public class SubscriptionService {
         return convertToResponse(updatedSubscription);
     }
 
-    // Delete subscription (soft delete)
-    public void deleteSubscription(Long memberId, Long packageId) {
-        SubscriptionId id = new SubscriptionId(memberId, packageId);
-        Subscription subscription = subscriptionRepository.findByIdAndIsDeletedFalse(id)
-                .orElseThrow(() -> new NotFoundException("Subscription not found with memberId: " + memberId + " and packageId: " + packageId));
-        subscription.setDeleted(true);
-        subscription.setStatus(SubscriptionStatus.CANCELLED);
-        subscriptionRepository.save(subscription);
-    }
-
     // Activate subscription
     public SubscriptionResponse activateSubscription(Long memberId, Long packageId) {
         SubscriptionId id = new SubscriptionId(memberId, packageId);

@@ -17,12 +17,14 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Random;
 import java.util.TreeMap;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -141,9 +143,9 @@ public class PaymentService {
         if (order.getPaymentStatus() == PaymentStatus.PAID) {
             throw new IllegalStateException("Đơn hàng đã được thanh toán. Không thể tạo payment mới.");
         }
-        // 2. Tạo Payment record trong DB
-        String txnRef = orderId + "-" + System.currentTimeMillis();
-        
+        // 2. Tạo Payment record trong DB với mã giao dịch ngẫu nhiên, đảm bảo không trùng trong DB
+        String txnRef = generateUniqueTransactionRef();
+
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setMethod("VNPAY");
@@ -202,6 +204,47 @@ public class PaymentService {
         }
         urlBuilder.deleteCharAt(urlBuilder.length() - 1); // Remove last '&'
         return urlBuilder.toString();
+    }
+
+    /**
+     * Tạo mã giao dịch theo format:
+     *  - 4 ký tự: năm hiện tại (yyyy)
+     *  - 2 ký tự: tháng (MM)
+     *  - 2 ký tự: ngày (dd)
+     *  - 8 ký tự: chữ cái in hoa ngẫu nhiên (A-Z)
+     *  Ví dụ: 20251126ABCDEFGH
+     */
+    private String generateTransactionRef() {
+        LocalDate today = LocalDate.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        String datePart = today.format(dateFormatter);
+
+        int randomLength = 8;
+        String alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        Random random = new Random();
+        StringBuilder randomPart = new StringBuilder(randomLength);
+        for (int i = 0; i < randomLength; i++) {
+            int idx = random.nextInt(alphabet.length());
+            randomPart.append(alphabet.charAt(idx));
+        }
+
+        return datePart + randomPart;
+    }
+
+    /**
+     * Sinh mã giao dịch đảm bảo không trùng trong DB (theo cột VnpTxnRef unique).
+     * Thử tối đa 5 lần, nếu vẫn trùng thì ném IllegalStateException.
+     */
+    private String generateUniqueTransactionRef() {
+        int maxAttempts = 5;
+        for (int i = 0; i < maxAttempts; i++) {
+            String candidate = generateTransactionRef();
+            Optional<Payment> existing = paymentRepository.findByVnpTxnRef(candidate);
+            if (existing.isEmpty()) {
+                return candidate;
+            }
+        }
+        throw new IllegalStateException("Không thể sinh mã giao dịch duy nhất sau " + maxAttempts + " lần thử");
     }
 
     private String generateHMAC(String secretKey, String signData) throws NoSuchAlgorithmException, InvalidKeyException {

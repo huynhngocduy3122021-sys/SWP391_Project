@@ -183,7 +183,7 @@ public class MemberService implements UserDetailsService {
         member.setResetTokenExpiry(LocalDateTime.now().plusHours(1)); // Token valid for 1 hour
         memberRepository.save(member);
 
-        // Generate reset link (adjust frontend URL as needed)
+
         String resetLink = "http://localhost:5173/reset-password?token=" + resetToken;
 
         // Send email
